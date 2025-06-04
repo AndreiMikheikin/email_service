@@ -81,6 +81,15 @@ export const changePassword = async ({ email, oldPassword, newPassword }) => {
   }
 };
 
+export const confirmEmail = async (token) => {
+  try {
+    const response = await apiClient.post('/api/users/confirm-email', { token });
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 // Добавляем интерсепторы при необходимости
 apiClient.interceptors.request.use(config => {
   // Можно добавить токен авторизации

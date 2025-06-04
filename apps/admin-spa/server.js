@@ -19,6 +19,9 @@ app.use('/api', createProxyMiddleware({
   target: process.env.API_URL || 'http://178.250.247.67:3355',
   changeOrigin: true,
   secure: false,
+  pathRewrite: {
+    '^/api': '', // <--- вот это важно!
+  },
 }));
 
 // Отдаём статику из dist
