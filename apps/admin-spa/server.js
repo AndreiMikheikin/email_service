@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3344;
 
 // Прокси для API
 app.use('/api', createProxyMiddleware({
-  target: process.env.API_URL || 'http://localhost:3355',
+  target: process.env.API_URL || 'http://178.250.247.67:3355',
   changeOrigin: true,
   secure: false,
 }));
@@ -44,7 +44,7 @@ app.use((err, req, res, next) => {
 
 // Запуск сервера
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Admin SPA server listening at http://localhost:${PORT}`);
+  console.log(`Admin SPA server listening at http://178.250.247.67:${PORT}`);
   console.log(`Serving static files from: ${path.join(__dirname, 'dist')}`);
-  console.log(`Proxying /api to: ${process.env.API_URL || 'http://localhost:3355'}`);
+  console.log(`Proxying /api to: ${process.env.API_URL || 'http://178.250.247.67:3355'}`);
 });
