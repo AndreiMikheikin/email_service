@@ -62,4 +62,5 @@ class UserModel extends BaseModel {
   }
 }
 
+
 export default new UserModel();
