@@ -18,10 +18,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup Node.js
+    - name: Setup Node.js 20
       uses: actions/setup-node@v3
       with:
-        node-version: 18
+        node-version: 20
         cache: 'npm'
 
     # --- Синхронизация зависимостей admin-spa ---
@@ -86,7 +86,7 @@ jobs:
         strip_components: 2
         timeout: 2m
 
-    # --- Установка зависимостей и перезапуск ---
+    # --- Установка зависимостей и перезапуск сервисов ---
     - name: Install dependencies and restart services
       uses: appleboy/ssh-action@v1.0.0
       with:
