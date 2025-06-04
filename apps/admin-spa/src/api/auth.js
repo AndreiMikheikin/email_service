@@ -1,46 +1,94 @@
-// apps/admin-spa/src/api/auth.js
 import axios from 'axios';
 
+// Используем VITE_API_URL из .env или fallback URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// Общий конфиг для axios
+const apiClient = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true // если используете куки/сессии
+});
+
+// Обработчик ошибок
+const handleError = (error) => {
+  if (error.response) {
+    return Promise.reject(error.response.data.message || 'Ошибка сервера');
+  } else if (error.request) {
+    return Promise.reject('Нет ответа от сервера');
+  } else {
+    return Promise.reject('Ошибка при отправке запроса');
+  }
+};
+
 export const registerUser = async ({ email, password }) => {
-  const response = await axios.post(`${API_URL}/api/users/register`, { email, password });
-  return response.data;
+  try {
+    const response = await apiClient.post('/api/users/register', { email, password });
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
 };
 
 export const resendConfirmationEmail = async (data) => {
-  const res = await fetch('${API_URL}/api/users/resend-confirmation', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error('Ошибка отправки письма');
-  return await res.json();
-}
+  try {
+    const response = await apiClient.post('/api/users/resend-confirmation', data);
+    return response.data;
+  } catch (error) {
+    handleError(error);
+  }
+};
 
 export const loginUser = async ({ email, password }) => {
-  const response = await axios.post(`${API_URL}/api/users/login`, { email, password });
-  return response.data;
+  try {
+    const response = await apiClient.post('/api/users/login', { email, password });
+    return response.data;
+  } catch (error) {
+    handleError(error);
+  }
 };
 
 export const forgotPassword = async ({ email }) => {
-  const response = await axios.post(`${API_URL}/api/users/forgot-password`, { email });
-  return response.data;
+  try {
+    const response = await apiClient.post('/api/users/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    handleError(error);
+  }
 };
 
 export const resetPassword = async ({ token, password }) => {
-  const response = await axios.post(`${API_URL}/api/users/reset-password`, {
-    token,
-    password,
-  });
-  return response.data;
+  try {
+    const response = await apiClient.post('/api/users/reset-password', { token, password });
+    return response.data;
+  } catch (error) {
+    handleError(error);
+  }
 };
 
 export const changePassword = async ({ email, oldPassword, newPassword }) => {
-  const response = await axios.post(`${API_URL}/api/users/change-password`, {
-    email,
-    oldPassword,
-    newPassword,
-  });
-  return response.data;
+  try {
+    const response = await apiClient.post('/api/users/change-password', {
+      email,
+      oldPassword,
+      newPassword
+    });
+    return response.data;
+  } catch (error) {
+    handleError(error);
+  }
 };
+
+// Добавляем интерсепторы при необходимости
+apiClient.interceptors.request.use(config => {
+  // Можно добавить токен авторизации
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, error => {
+  return Promise.reject(error);
+});

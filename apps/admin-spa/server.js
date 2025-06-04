@@ -10,15 +10,14 @@ const app = express();
 const PORT = process.env.PORT || 3344;
 
 // Middleware для статических файлов
-app.use(express.static(path.join(__dirname, 'dist')), {
-  // Дополнительные настройки для production
+app.use(express.static(path.join(__dirname, 'dist'), {
   maxAge: '1y',
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache');
     }
   }
-});
+}));
 
 // Обработка всех маршрутов для SPA
 app.get('*', (req, res) => {

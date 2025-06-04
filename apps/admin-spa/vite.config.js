@@ -1,15 +1,21 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  // Загружаем переменные окружения из соответствующего .env файла
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
     plugins: [react()],
     server: {
-        proxy: {
-            '/api': {
-                target: `${process.env.VITE_API_URL}`,
-                changeOrigin: true,
-            },
+      port: 3344,
+      proxy: {
+        '/api': {
+          target: env.VITE_API_URL || 'http://localhost:3000',
+          changeOrigin: true,
+          secure: false,  // если нужно для https без валидного сертификата
         },
-        port: 3344,
+      },
     },
+  };
 });
