@@ -37,7 +37,7 @@ export const resendConfirmationEmail = async (data) => {
     const response = await apiClient.post('/api/users/resend-confirmation', data);
     return response.data;
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };
 
@@ -46,7 +46,7 @@ export const loginUser = async ({ email, password }) => {
     const response = await apiClient.post('/api/users/login', { email, password });
     return response.data;
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };
 
@@ -55,7 +55,7 @@ export const forgotPassword = async ({ email }) => {
     const response = await apiClient.post('/api/users/forgot-password', { email });
     return response.data;
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };
 
@@ -64,7 +64,7 @@ export const resetPassword = async ({ token, password }) => {
     const response = await apiClient.post('/api/users/reset-password', { token, password });
     return response.data;
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };
 
@@ -77,7 +77,7 @@ export const changePassword = async ({ email, oldPassword, newPassword }) => {
     });
     return response.data;
   } catch (error) {
-    handleError(error);
+    return handleError(error);
   }
 };
 
