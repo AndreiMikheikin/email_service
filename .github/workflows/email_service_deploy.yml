@@ -9,7 +9,6 @@ on:
       - 'apps/admin-spa/**'
       - 'package.json'
       - 'package-lock.json'
-      - 'ecosystem.config.cjs'
       - '.github/workflows/deploy.yml'
 
 jobs:
@@ -43,7 +42,6 @@ jobs:
         cp -r sql deployment/sql
         cp package.json deployment/
         cp package-lock.json deployment/
-        cp ecosystem.config.cjs deployment/
         rm -rf deployment/node_modules
 
     # --- Проверка SSH ключа ---
