@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Используем VITE_API_URL из .env или fallback URL
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3355';
 
 // Общий конфиг для axios
 const apiClient = axios.create({
