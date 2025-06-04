@@ -9,6 +9,7 @@ on:
       - 'apps/admin-spa/**'
       - 'package.json'
       - 'package-lock.json'
+      - 'ecosystem.config.cjs'
       - '.github/workflows/deploy.yml'
 
 jobs:
@@ -42,6 +43,7 @@ jobs:
         cp -r sql deployment/sql
         cp package.json deployment/
         cp package-lock.json deployment/
+        cp ecosystem.config.cjs deployment/
         rm -rf deployment/node_modules
 
     # --- Проверка SSH ключа ---
@@ -54,7 +56,7 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    # --- Деплой email-service ---
+    # --- Деплой email-service (копируем СОДЕРЖИМОЕ deployment/ в /root/email-service/) ---
     - name: Deploy email-service via SCP
       uses: appleboy/scp-action@v0.1.5
       with:
@@ -62,14 +64,13 @@ jobs:
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        source: "deployment/"
-        target: "/root/email-service"
+        source: deployment/*
+        target: /root/email-service
         rm: true
         overwrite: true
-        # strip_components: 1  # Отключил, чтобы сохранить структуру папок как есть
         timeout: 2m
 
-    # --- Деплой admin-spa ---
+    # --- Деплой admin-spa (копируем содержимое dist и файлы в /root/email-service/apps/admin-spa) ---
     - name: Deploy admin-spa via SCP
       uses: appleboy/scp-action@v0.1.5
       with:
@@ -77,13 +78,14 @@ jobs:
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        source: apps/admin-spa/dist/,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json
-        target: /root/email-service/admin-spa
+        # Передаем содержимое dist, а не папку dist целиком
+        source: apps/admin-spa/dist/*,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json
+        target: /root/email-service/apps/admin-spa
         rm: true
         overwrite: true
         timeout: 2m
 
-    # --- Установка зависимостей и запуск через PM2 ---
+    # --- Установка зависимостей и запуск через ecosystem.config.cjs ---
     - name: Install deps & restart with PM2
       uses: appleboy/ssh-action@v1.0.0
       with:
@@ -95,10 +97,10 @@ jobs:
           cd /root/email-service
           npm install --production
 
-          cd /root/email-service/admin-spa
+          cd /root/email-service/apps/admin-spa
           npm install --production
 
           cd /root/email-service
           pm2 delete all || true
-          pm2 start ecosystem.config.cjs --update-env
+          pm2 start ecosystem.config.cjs
           pm2 save
