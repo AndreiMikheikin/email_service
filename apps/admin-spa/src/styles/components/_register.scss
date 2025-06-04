@@ -1,0 +1,125 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.aam_register-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: $secondary-light;
+  font-family: $font-main;
+}
+
+.aam_register-form {
+  background-color: wheat;
+  padding: $spacing-lg;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px; // увеличили ширину для адекватного размера
+}
+
+.aam_register-title {
+  margin-bottom: $spacing-md;
+  color: $text-color;
+  text-align: center;
+}
+
+.aam_register-input {
+  display: block;
+  width: 94%;
+  padding: $spacing-sm;
+  margin-bottom: $spacing-md;
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  color: $text-color;
+  font-family: $font-main;
+
+  &:focus {
+    outline: none;
+    border-color: $hover-dark;
+  }
+}
+
+.aam_password-checks {
+  margin-bottom: $spacing-lg; // отступ между списком и кнопкой
+  font-size: 0.875rem;
+  color: $text-color;
+
+  p {
+    margin-bottom: $spacing-xs;
+    font-weight: bold;
+  }
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+
+    li {
+      margin-bottom: 4px;
+      padding-left: 1.2em;
+      position: relative;
+
+      &::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        color: red;
+      }
+
+      &.valid {
+        color: green;
+
+        &::before {
+          content: '✔';
+          color: green;
+        }
+      }
+    }
+  }
+}
+
+.aam_register-button {
+  width: 100%;
+  padding: $spacing-sm;
+  background-color: $primary-dark;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: $font-main;
+  transition: background-color $transition;
+
+  &:hover {
+    background-color: $hover-dark;
+  }
+
+  &:disabled {
+    background-color: gray;
+    cursor: not-allowed;
+  }
+}
+
+.aam_register-message {
+  color: red;
+  text-align: center;
+  margin-top: $spacing-xs;
+  font-family: $font-main;
+}
+
+.aam_register-links {
+  margin-top: $spacing-md;
+  text-align: center;
+  font-family: $font-main;
+
+  a {
+    color: $text-color;
+    text-decoration: underline;
+    cursor: pointer;
+
+    &:hover {
+      color: $hover-dark;
+    }
+  }
+}

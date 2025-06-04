@@ -1,0 +1,8 @@
+# Корневые исключения
+.env
+node_modules/
+ecosystem.config.cjs
+
+# SPA-приложения (если отдельные env)
+apps/**/.env
+apps/**/node_modules/

@@ -1,0 +1,85 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.aam_email-confirm-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: $secondary-light;
+  font-family: $font-main;
+  color: $text-color;
+  text-align: center;
+  padding: $spacing-md;
+}
+
+.aam_email-confirm-message {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+  padding: $spacing-lg;
+  border-radius: $border-radius;
+  font-size: 1.2rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &.loading {
+    background-color: color.scale($secondary-light, $lightness: 10%);
+    color: $text-color;
+    border: 1px solid $border-color;
+  }
+
+  &.success {
+    background-color: color.scale($primary-light, $lightness: -10%);
+    color: color.scale($primary-dark, $lightness: 30%);
+    border: 1px solid $primary-dark;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 128, 0, 0.2);
+  }
+
+  &.error {
+    background-color: color.scale($error-light, $lightness: -10%);
+    color: color.scale($error-dark, $lightness: 30%);
+    border: 1px solid $error-dark;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.2);
+  }
+
+  &.expired {
+    background-color: color.scale($warning-light, $lightness: -10%);
+    color: $warning-dark;
+    border: 1px solid $warning-dark;
+    font-weight: 500;
+
+    p {
+      margin-bottom: $spacing-sm;
+    }
+
+    input {
+      width: 100%;
+      padding: $spacing-sm;
+      margin-top: $spacing-sm;
+      margin-bottom: $spacing-md;
+      border-radius: $border-radius;
+      border: 1px solid $border-color;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: $primary-dark;
+      color: white;
+      border: none;
+      padding: $spacing-sm $spacing-md;
+      border-radius: $border-radius;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: color.scale($primary-dark, $lightness: -20%);
+      }
+    }
+  }
+}

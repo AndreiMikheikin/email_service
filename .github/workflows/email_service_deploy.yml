@@ -1,0 +1,106 @@
+name: Deploy Email Service and Admin SPA
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/**'
+      - 'sql/**'
+      - 'apps/admin-spa/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'ecosystem.config.cjs'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+        cache: 'npm'
+
+    # --- Сборка admin-spa ---
+    - name: Install admin-spa dependencies
+      working-directory: ./apps/admin-spa
+      run: npm ci
+
+    - name: Build admin-spa
+      working-directory: ./apps/admin-spa
+      run: npm run build
+
+    # --- Подготовка deployment для email-service ---
+    - name: Prepare email-service deployment artifacts
+      run: |
+        rm -rf deployment
+        mkdir deployment
+        cp -r src deployment/src
+        cp -r sql deployment/sql
+        cp package.json deployment/
+        cp package-lock.json deployment/
+        cp ecosystem.config.cjs deployment/
+        rm -rf deployment/node_modules
+
+    # --- Проверка SSH ключа ---
+    - name: Validate SSH Key
+      run: |
+        echo "$SSH_PRIVATE_KEY" > key.pem
+        chmod 600 key.pem
+        ssh-keygen -lf key.pem
+        rm key.pem
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    # --- Деплой email-service ---
+    - name: Deploy email-service via SCP
+      uses: appleboy/scp-action@v0.1.5
+      with:
+        host: 178.250.247.67
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        source: "deployment/"
+        target: "/root/email-service"
+        rm: true
+        overwrite: true
+        # strip_components: 1  # Отключил, чтобы сохранить структуру папок как есть
+        timeout: 2m
+
+    # --- Деплой admin-spa ---
+    - name: Deploy admin-spa via SCP
+      uses: appleboy/scp-action@v0.1.5
+      with:
+        host: 178.250.247.67
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        source: apps/admin-spa/dist/,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json
+        target: /root/email-service/admin-spa
+        rm: true
+        overwrite: true
+        timeout: 2m
+
+    # --- Установка зависимостей и запуск через PM2 ---
+    - name: Install deps & restart with PM2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 178.250.247.67
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          cd /root/email-service
+          npm install --production
+
+          cd /root/email-service/admin-spa
+          npm install --production
+
+          cd /root/email-service
+          pm2 delete all || true
+          pm2 start ecosystem.config.cjs --update-env
+          pm2 save

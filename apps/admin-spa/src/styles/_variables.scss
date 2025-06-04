@@ -1,0 +1,23 @@
+@use 'sass:color';
+
+$primary-dark: #093c29;
+$primary-light: wheat;
+$secondary-light: #b1ac9b;
+$hover-dark: color.adjust($primary-dark, $lightness: -10%);
+$text-color: $primary-dark;
+$border-color: $primary-dark;
+$error-light: #f8d7da;
+$error-dark: #721c24;
+$warning-light: #fff3cd;
+$warning-dark: #856404;
+
+$font-main: 'Inter', sans-serif;
+
+$border-radius: 8px;
+$transition: 0.3s ease;
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;

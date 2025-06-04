@@ -1,0 +1,188 @@
+// src/controllers/userController.js
+
+import userService from '../services/userService.js';
+import jwt from 'jsonwebtoken';
+import { sendMail } from '../utils/mailer.js';
+
+const register = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email и пароль обязательны' });
+    }
+
+    const existing = await userService.findUserByEmail(email);
+
+    if (existing) {
+      return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
+    }
+
+    const user = await userService.createUser({ email, password });
+
+    const confirmToken = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    const confirmUrl = `http://178.250.247.67:3355/confirm-email?token=${confirmToken}`;
+
+    await sendMail({
+      to: user.email,
+      subject: 'Подтверждение регистрации',
+      html: `
+        <h3>Добро пожаловать!</h3>
+        <p>Пожалуйста, подтвердите вашу почту, перейдя по ссылке:</p>
+        <a href="${confirmUrl}">${confirmUrl}</a>
+      `,
+    });
+
+    res.status(201).json({ message: 'Регистрация прошла успешно. Подтвердите email.', user });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: err.message });
+  }
+};
+
+const confirmEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    await userService.markEmailConfirmed(userId);
+
+    res.json({ message: 'Email подтвержден!' });
+  } catch (err) {
+    res.status(400).json({ message: 'Неверный или просроченный токен' });
+  }
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email обязателен' });
+
+    const user = await userService.findUserByEmail(email);
+    if (!user) return res.status(404).json({ message: 'Пользователь не найден' });
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Сохраняем токен в базе
+    await userService.updateResetToken(user.id, token);
+
+    const resetUrl = `http://178.250.247.67:3355/reset-password?token=${token}`;
+
+    await sendMail({
+      to: user.email,
+      subject: 'Восстановление пароля',
+      html: `
+        <p>Для сброса пароля перейдите по ссылке:</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p>Срок действия ссылки — 1 час.</p>
+      `,
+    });
+
+    res.json({ message: 'Письмо с инструкцией отправлено' });
+  } catch (err) {
+    res.status(500).json({ message: 'Ошибка восстановления пароля' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Токен и новый пароль обязательны' });
+    }
+
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      return res.status(400).json({ message: 'Недействительный или истекший токен' });
+    }
+
+    const user = await userService.findUserById(payload.id);
+    if (!user || user.reset_token !== token) {
+      return res.status(400).json({ message: 'Неверный токен' });
+    }
+
+    await userService.updatePassword(user.id, password);
+    await userService.clearResetToken(user.id);
+
+    res.json({ message: 'Пароль успешно обновлён' });
+  } catch (err) {
+    console.error('resetPassword ошибка:', err);
+    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+  }
+};
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await userService.validateUser(email, password);
+    if (!user) {
+      return res.status(401).json({ message: 'Неверный email или пароль' });
+    }
+
+    if (!user.email_confirmed) {
+      return res.status(403).json({ message: 'Email не подтверждён' });
+    }
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET not defined');
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      secret,
+      { expiresIn: '2h' }
+    );
+
+    res.json({ token, ...user });
+  } catch (err) {
+    res.status(500).json({ message: 'Ошибка авторизации' });
+  }
+};
+
+const getResetTokenInfo = async (req, res) => {
+  const { token } = req.query;
+  console.log('Token from query:', token);
+
+  if (!token) return res.status(400).json({ message: 'Токен обязателен' });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+
+    const user = await userService.findUserById(decoded.id);
+    console.log('User from DB:', user);
+
+    if (!user || user.reset_token !== token) {
+      return res.status(404).json({ message: 'Пользователь не найден или токен неактуален' });
+    }
+
+    console.log('Отправляю email:', user.email);
+    res.json({ email: user.email });
+    console.log('Ответ с email отправлен клиенту');
+  } catch (error) {
+    console.error('Ошибка в getResetTokenInfo:', error);
+    res.status(400).json({ message: 'Неверный или просроченный токен' });
+  }
+};
+
+export default {
+  register,
+  confirmEmail,
+  forgotPassword,
+  resetPassword,
+  login,
+  getResetTokenInfo,
+};
