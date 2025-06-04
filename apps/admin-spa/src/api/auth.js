@@ -8,7 +8,6 @@ export const registerUser = async ({ email, password }) => {
   return response.data;
 };
 
-
 export const resendConfirmationEmail = async (data) => {
   const res = await fetch('${API_URL}/api/users/resend-confirmation', {
     method: 'POST',
