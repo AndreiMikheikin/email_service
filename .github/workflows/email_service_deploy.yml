@@ -37,12 +37,12 @@ jobs:
     - name: Prepare email-service deployment artifacts
       run: |
         rm -rf deployment
-        mkdir deployment
-        cp -r src deployment/src
-        cp -r sql deployment/sql
+        mkdir -p deployment/src
+        mkdir -p deployment/sql
+        cp -r src/* deployment/src/
+        cp -r sql/* deployment/sql/
         cp package.json deployment/
         cp package-lock.json deployment/
-        rm -rf deployment/node_modules
 
     # --- Проверка SSH ключа ---
     - name: Validate SSH Key
@@ -54,7 +54,7 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    # --- Деплой email-service (копируем СОДЕРЖИМОЕ deployment/ в /root/email-service/) ---
+    # --- Деплой email-service ---
     - name: Deploy email-service via SCP
       uses: appleboy/scp-action@v0.1.5
       with:
@@ -62,13 +62,14 @@ jobs:
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        source: deployment/*
-        target: /root/email-service
+        source: "deployment/*"
+        target: "/root/email-service/"
         rm: true
         overwrite: true
+        strip_components: 1
         timeout: 2m
 
-    # --- Деплой admin-spa (копируем содержимое dist и файлы в /root/email-service/apps/admin-spa) ---
+    # --- Деплой admin-spa ---
     - name: Deploy admin-spa via SCP
       uses: appleboy/scp-action@v0.1.5
       with:
@@ -76,11 +77,11 @@ jobs:
         username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
-        # Передаем содержимое dist, а не папку dist целиком
-        source: apps/admin-spa/dist/*,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json
-        target: /root/email-service/apps/admin-spa
+        source: "apps/admin-spa/dist/*,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json"
+        target: "/root/email-service/apps/admin-spa/"
         rm: true
         overwrite: true
+        strip_components: 2  # Убираем apps/admin-spa из пути
         timeout: 2m
 
     # --- Установка зависимостей и запуск через ecosystem.config.cjs ---
