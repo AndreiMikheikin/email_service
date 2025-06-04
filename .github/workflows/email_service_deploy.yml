@@ -45,6 +45,7 @@ jobs:
         cp -r sql deployment/
         cp package.json deployment/
         cp package-lock.json deployment/
+        # Исключаем ecosystem.config.cjs из копирования
 
     # --- Проверка SSH ключа ---
     - name: Validate SSH Key
@@ -66,7 +67,7 @@ jobs:
         port: 22
         source: "deployment/*"
         target: "/root/email-service/"
-        rm: true
+        rm: false  # Не удалять целевые файлы перед копированием
         overwrite: true
         strip_components: 1
         timeout: 2m
@@ -81,7 +82,7 @@ jobs:
         port: 22
         source: "apps/admin-spa/dist/*,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json"
         target: "/root/email-service/apps/admin-spa/"
-        rm: true
+        rm: false  # Не удалять целевые файлы перед копированием
         overwrite: true
         strip_components: 2
         timeout: 2m
@@ -100,10 +101,12 @@ jobs:
           rm -rf node_modules
           npm ci --production
           
-          # Установка admin-spa
+          # Установка admin-spa (сохраняем .env)
           cd /root/email-service/apps/admin-spa
+          [ -f .env ] && cp .env .env.backup  # Резервная копия .env если существует
           rm -rf node_modules
           npm ci --production
+          [ -f .env.backup ] && mv .env.backup .env  # Восстанавливаем .env
           
           # Перезапуск сервисов
           cd /root/email-service
