@@ -34,15 +34,14 @@ jobs:
       run: npm run build
 
     # --- Подготовка deployment для email-service ---
-    - name: Prepare email-service deployment artifacts
+    - name: Prepare email-service deployment
       run: |
-        rm -rf deployment
-        mkdir -p deployment/src
-        mkdir -p deployment/sql
-        cp -r src/* deployment/src/
-        cp -r sql/* deployment/sql/
+        mkdir -p deployment
+        cp -r src deployment/
+        cp -r sql deployment/
         cp package.json deployment/
         cp package-lock.json deployment/
+        # Не копируем ecosystem.config.cjs, чтобы не перезаписывать существующий
 
     # --- Проверка SSH ключа ---
     - name: Validate SSH Key
@@ -55,7 +54,7 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
     # --- Деплой email-service ---
-    - name: Deploy email-service via SCP
+    - name: Deploy email-service
       uses: appleboy/scp-action@v0.1.5
       with:
         host: 178.250.247.67
@@ -70,7 +69,7 @@ jobs:
         timeout: 2m
 
     # --- Деплой admin-spa ---
-    - name: Deploy admin-spa via SCP
+    - name: Deploy admin-spa
       uses: appleboy/scp-action@v0.1.5
       with:
         host: 178.250.247.67
@@ -81,11 +80,11 @@ jobs:
         target: "/root/email-service/apps/admin-spa/"
         rm: true
         overwrite: true
-        strip_components: 2  # Убираем apps/admin-spa из пути
+        strip_components: 2
         timeout: 2m
 
-    # --- Установка зависимостей и запуск через ecosystem.config.cjs ---
-    - name: Install deps & restart with PM2
+    # --- Установка зависимостей и перезапуск ---
+    - name: Install dependencies and restart services
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: 178.250.247.67
@@ -93,13 +92,28 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+          # Установка зависимостей email-service
           cd /root/email-service
           npm install --production
-
+          
+          # Установка зависимостей admin-spa
           cd /root/email-service/apps/admin-spa
           npm install --production
-
+          
+          # Перезапуск сервисов через PM2 (без удаления конфига)
           cd /root/email-service
-          pm2 delete all || true
-          pm2 start ecosystem.config.cjs
+          if pm2 list | grep -q "email-service"; then
+            pm2 reload email-service
+          else
+            pm2 start ecosystem.config.cjs --only email-service
+          fi
+          
+          if pm2 list | grep -q "admin-spa"; then
+            pm2 reload admin-spa
+          else
+            pm2 start ecosystem.config.cjs --only admin-spa
+          fi
+          
           pm2 save
+          sleep 3
+          pm2 status
