@@ -7,7 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3344',
+  origin: 'http://178.250.247.67:3344',
   credentials: true
 }));
 
