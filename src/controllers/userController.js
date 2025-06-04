@@ -56,7 +56,11 @@ const confirmEmail = async (req, res) => {
 
     res.json({ message: 'Email подтвержден!' });
   } catch (err) {
-    res.status(400).json({ message: 'Неверный или просроченный токен' });
+    console.error('Ошибка подтверждения email:', err.message);
+    res.status(400).json({ 
+      message: 'Неверный или просроченный токен',
+      error: err.message
+    });
   }
 };
 
