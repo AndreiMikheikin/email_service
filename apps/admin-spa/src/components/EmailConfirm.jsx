@@ -13,6 +13,8 @@ const EmailConfirm = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [email, setEmail] = useState('');
   const [countdown, setCountdown] = useState(3);
+  
+  const API_URL = import.meta.env.VITE_API_URL || 'http://178.250.247.67:3355';
 
   useEffect(() => {
     if (!token) {
@@ -23,7 +25,7 @@ const EmailConfirm = () => {
 
     async function confirmEmail() {
       try {
-        const res = await fetch(`/api/users/confirm-email?token=${token}`);
+        const res = await fetch(`${API_URL}/api/users/confirm-email?token=${token}`);
         if (res.ok) {
           setStatus('success');
           setCountdown(3); // стартуем отсчет
