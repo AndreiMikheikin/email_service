@@ -19,6 +19,10 @@ app.use('/api', createProxyMiddleware({
   target: process.env.API_URL || 'http://178.250.247.67:3355',
   changeOrigin: true,
   secure: false,
+  onError: (err, req, res) => {
+    console.error('Proxy error:', err.message);
+    res.status(502).json({ error: 'Proxy error', details: err.message });
+  }
 }));
 
 // Отдаём статику из dist
