@@ -13,14 +13,10 @@ const apiClient = axios.create({
 });
 
 // Обработчик ошибок
-const handleError = (error) => {
-  if (error.response) {
-    return Promise.reject(error.response.data.message || 'Ошибка сервера');
-  } else if (error.request) {
-    return Promise.reject('Нет ответа от сервера');
-  } else {
-    return Promise.reject('Ошибка при отправке запроса');
-  }
+export const handleError = (error) => {
+  const serverMessage = error.response?.data?.message;
+  const message = serverMessage || error.message || 'Неизвестная ошибка';
+  throw new Error(message);
 };
 
 export const registerUser = async ({ email, password }) => {

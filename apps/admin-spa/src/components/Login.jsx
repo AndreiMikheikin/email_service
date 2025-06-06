@@ -20,7 +20,7 @@ const Login = () => {
       localStorage.setItem('token', data.token);
       navigate('/adminDashboard');
     } catch (err) {
-      setMessage(err.response?.data?.message || 'Ошибка входа');
+      setMessage(err.message);
     }
     setLoading(false);
   };
