@@ -86,15 +86,6 @@ export const confirmEmail = async (token) => {
   }
 };
 
-export const fetchAdminDashboard = async () => {
-  try {
-    const response = await apiClient.get('/api/users/adminDashboard');
-    return response.data;
-  } catch (error) {
-    return handleError(error);
-  }
-};
-
 // Добавляем интерсепторы при необходимости
 apiClient.interceptors.request.use(config => {
   // Можно добавить токен авторизации

@@ -1,34 +1,37 @@
+// src/components/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import { fetchAdminDashboard } from '../api/auth';
+import axios from 'axios';
 
 const AdminDashboard = () => {
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
-  const [error, setError] = useState('');
 
   useEffect(() => {
-    const getDashboardInfo = async () => {
+    const fetchDashboard = async () => {
       try {
-        const data = await fetchAdminDashboard();
-        setMessage(data.message);
-        setUser(data.user);
+        const res = await axios.get('/api/users/adminDashboard', {
+          withCredentials: true, // если нужны куки
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        setMessage(res.data.message);
+        setUser(res.data.user);
       } catch (err) {
-        setError(err.message);
+        setMessage('Ошибка доступа: ' + (err.response?.data?.message || err.message));
       }
     };
 
-    getDashboardInfo();
+    fetchDashboard();
   }, []);
 
   return (
-    <div className="aam_admin-dashboard">
-      {error && <p className="aam_error">{error}</p>}
-      {message && <p className="aam_success">{message}</p>}
+    <div>
+      <h1>{message}</h1>
       {user && (
         <div>
-          <h2>Добро пожаловать, {user.role}!</h2>
-          <p><strong>Email:</strong> {user.role} {user.email}</p>
-          {/* можно добавить другое: user.id, user.role, и т.п. */}
+          <p>Email: {user.email}</p>
+          <p>Роль: {user.role}</p>
         </div>
       )}
     </div>
