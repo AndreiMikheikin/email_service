@@ -1,28 +1,23 @@
 // src/components/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { fetchAdminDashboard } from '../api/auth';
 
 const AdminDashboard = () => {
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const fetchDashboard = async () => {
+    const loadDashboard = async () => {
       try {
-        const res = await axios.get('/api/users/adminDashboard', {
-          withCredentials: true, // если нужны куки
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`
-          }
-        });
-        setMessage(res.data.message);
-        setUser(res.data.user);
+        const data = await fetchAdminDashboard();
+        setMessage(data.message);
+        setUser(data.user);
       } catch (err) {
-        setMessage('Ошибка доступа: ' + (err.response?.data?.message || err.message));
+        setMessage('Ошибка доступа: ' + err.message);
       }
     };
 
-    fetchDashboard();
+    loadDashboard();
   }, []);
 
   return (
