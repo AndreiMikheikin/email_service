@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { resetPassword, changePassword } from '../api/auth';
 import { validatePassword } from '../utils/validatePassword';
 import '../styles/components/_resetPassword.scss';
 
 const ResetPassword = () => {
   const { search } = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(search);
   const token = params.get('token');
 
@@ -19,11 +20,21 @@ const ResetPassword = () => {
     confirmNewPassword: '',
   });
 
+  const [passwordChecks, setPasswordChecks] = useState({
+    length: false,
+    lowercase: false,
+    uppercase: false,
+    number: false,
+    match: false,
+  });
+
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://178.250.247.67:3355';
 
+  // Получаем email по токену
   useEffect(() => {
     if (token) {
       fetch(`${API_URL}/api/users/reset-token-info?token=${token}`)
@@ -38,39 +49,65 @@ const ResetPassword = () => {
           setTokenError(true);
         });
     }
-  }, [token]);
+  }, [token, API_URL]);
+
+  // Валидация пароля при изменении
+  useEffect(() => {
+    setPasswordChecks(validatePassword(form.newPassword, form.confirmNewPassword));
+  }, [form.newPassword, form.confirmNewPassword]);
+
+  // Проверка валидности формы (для кнопки)
+  const isFormValidReset = (form, checks, tokenExists) => {
+    if (tokenExists) {
+      return checks.length && checks.lowercase &&
+        checks.uppercase && checks.number && checks.match;
+    } else {
+      return form.email.length > 0 &&
+        form.currentPassword.length > 0 &&
+        checks.length && checks.lowercase &&
+        checks.uppercase && checks.number && checks.match;
+    }
+  };
+
+  const formValid = isFormValidReset(form, passwordChecks, !!token);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
     setMessage('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { email, currentPassword, newPassword, confirmNewPassword } = form;
+    setError('');
+    setMessage('');
 
-    if (newPassword !== confirmNewPassword) {
-      return setError('Пароли не совпадают');
+    if (!formValid) {
+      setError('Проверьте корректность введённых данных');
+      return;
     }
 
-    const validationError = validatePassword(newPassword);
-    if (validationError) {
-      return setError(validationError);
-    }
-
+    setLoading(true);
     try {
       if (token) {
-        const response = await resetPassword({ token, newPassword });
+        const response = await resetPassword({ token, newPassword: form.newPassword });
         setMessage(response.message || 'Пароль успешно сброшен');
+        // Можно после успешного сброса делать редирект на логин
+        setTimeout(() => navigate('/'), 2000);
       } else {
-        const response = await changePassword({ email, currentPassword, newPassword });
+        const response = await changePassword({
+          email: form.email,
+          currentPassword: form.currentPassword,
+          newPassword: form.newPassword,
+        });
         setMessage(response.message || 'Пароль успешно изменён');
+        setTimeout(() => navigate('/'), 2000);
       }
     } catch (err) {
-      const serverMessage = err?.response?.data?.message;
+      const serverMessage = err.response?.data?.message;
       setError(serverMessage || err.message || 'Ошибка при изменении пароля');
     }
+    setLoading(false);
   };
 
   if (token && tokenError) {
@@ -84,7 +121,7 @@ const ResetPassword = () => {
 
   return (
     <div className="aam_reset-password-container">
-      <form className="aam_reset-password-form" onSubmit={handleSubmit}>
+      <form className="aam_reset-password-form" onSubmit={handleSubmit} noValidate>
         {token ? (
           <p>
             Электронная почта: <strong>{emailFromToken || '...'}</strong>
@@ -140,8 +177,8 @@ const ResetPassword = () => {
           </ul>
         </div>
 
-        <button type="submit">
-          {token ? 'Сбросить пароль' : 'Изменить пароль'}
+        <button type="submit" disabled={!formValid || loading}>
+          {loading ? (token ? 'Сброс пароля...' : 'Изменение пароля...') : (token ? 'Сбросить пароль' : 'Изменить пароль')}
         </button>
         <a href="/">Отмена</a>
       </form>
