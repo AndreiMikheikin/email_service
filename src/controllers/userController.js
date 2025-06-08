@@ -58,7 +58,7 @@ const confirmEmail = async (req, res) => {
   } catch (err) {
     console.log(err.message);
     console.error('Ошибка подтверждения email:', err.message);
-    res.status(400).json({ 
+    res.status(400).json({
       message: 'Неверный или просроченный токен',
       error: err.message
     });
@@ -127,6 +127,33 @@ const resetPassword = async (req, res) => {
   } catch (err) {
     console.error('resetPassword ошибка:', err);
     res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) return res.status(401).json({ message: 'Неавторизован' });
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Старый и новый пароли обязательны' });
+    }
+
+    const user = await userService.findUserById(userId);
+    if (!user) return res.status(404).json({ message: 'Пользователь не найден' });
+
+    const isValid = await userService.comparePasswords(oldPassword, user.password);
+    if (!isValid) {
+      return res.status(403).json({ message: 'Старый пароль неверен' });
+    }
+
+    await userService.updatePassword(user.id, newPassword);
+
+    res.json({ message: 'Пароль успешно изменён' });
+  } catch (err) {
+    console.error('Ошибка смены пароля:', err);
+    res.status(500).json({ message: 'Ошибка смены пароля' });
   }
 };
 
@@ -206,6 +233,7 @@ export default {
   confirmEmail,
   forgotPassword,
   resetPassword,
+  changePassword,
   login,
   getResetTokenInfo,
 };
