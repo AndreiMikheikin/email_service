@@ -15,7 +15,7 @@ router.post('/login', userController.login);
 router.get('/reset-token-info', userController.getResetTokenInfo);
 
 // защищённый маршрут
-router.get('/profile', authMiddleware, (req, res) => {
+router.get('/adminDashboard', authMiddleware, (req, res) => {
   res.json({ message: 'Вы авторизованы!', user: req.user });
 });
 
