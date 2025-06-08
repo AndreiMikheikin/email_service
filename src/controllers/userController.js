@@ -181,7 +181,15 @@ const login = async (req, res) => {
       { expiresIn: '2h' }
     );
 
-    res.json({ token, ...user });
+    res.json({
+      message: 'Успешный вход',
+      token,
+      user: {
+        email: user.email,
+        role: user.role
+        // можно добавить другие безопасные поля
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: 'Ошибка авторизации' });
   }
