@@ -13,13 +13,10 @@ const ResetPassword = () => {
   const [emailFromToken, setEmailFromToken] = useState('');
   const [tokenError, setTokenError] = useState(false);
 
-  const [form, setForm] = useState({
-    email: '',
-    currentPassword: '',
-    newPassword: '',
-    confirmNewPassword: '',
-  });
-
+  const [email, setEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordChecks, setPasswordChecks] = useState({
     length: false,
     lowercase: false,
@@ -28,13 +25,12 @@ const ResetPassword = () => {
     match: false,
   });
 
-  const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://178.250.247.67:3355';
 
-  // Получаем email по токену
   useEffect(() => {
     if (token) {
       fetch(`${API_URL}/api/users/reset-token-info?token=${token}`)
@@ -51,36 +47,30 @@ const ResetPassword = () => {
     }
   }, [token, API_URL]);
 
-  // Валидация пароля при изменении
   useEffect(() => {
-    setPasswordChecks(validatePassword(form.newPassword, form.confirmNewPassword));
-  }, [form.newPassword, form.confirmNewPassword]);
+    setPasswordChecks(validatePassword(newPassword, passwordConfirm));
+  }, [newPassword, passwordConfirm]);
 
-  // Проверка валидности формы (для кнопки)
-  const isFormValidReset = (form, checks, tokenExists) => {
-    if (tokenExists) {
-      return checks.length && checks.lowercase &&
-        checks.uppercase && checks.number && checks.match;
+  const isFormValidReset = () => {
+    if (token) {
+      // Для сброса с токеном - проверяем только пароль и подтверждение
+      return Object.values(passwordChecks).every(Boolean);
     } else {
-      return form.email.length > 0 &&
-        form.currentPassword.length > 0 &&
-        checks.length && checks.lowercase &&
-        checks.uppercase && checks.number && checks.match;
+      // Для смены пароля - проверяем email, текущий пароль и новые пароли
+      return (
+        email &&
+        currentPassword &&
+        Object.values(passwordChecks).every(Boolean)
+      );
     }
   };
 
-  const formValid = isFormValidReset(form, passwordChecks, !!token);
-
-  const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    setError('');
-    setMessage('');
-  };
+  const formValid = isFormValidReset();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setMessage('');
+    setError('');
 
     if (!formValid) {
       setError('Проверьте корректность введённых данных');
@@ -90,22 +80,16 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       if (token) {
-        const response = await resetPassword({ token, newPassword: form.newPassword });
+        const response = await resetPassword({ token, newPassword });
         setMessage(response.message || 'Пароль успешно сброшен');
-        // Можно после успешного сброса делать редирект на логин
         setTimeout(() => navigate('/'), 2000);
       } else {
-        const response = await changePassword({
-          email: form.email,
-          currentPassword: form.currentPassword,
-          newPassword: form.newPassword,
-        });
+        const response = await changePassword({ email, currentPassword, newPassword });
         setMessage(response.message || 'Пароль успешно изменён');
         setTimeout(() => navigate('/'), 2000);
       }
     } catch (err) {
-      const serverMessage = err.response?.data?.message;
-      setError(serverMessage || err.message || 'Ошибка при изменении пароля');
+      setError(err.response?.data?.message || 'Ошибка при изменении пароля');
     }
     setLoading(false);
   };
@@ -130,41 +114,35 @@ const ResetPassword = () => {
           <>
             <input
               type="email"
-              name="email"
               placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               required
             />
             <input
               type="password"
-              name="currentPassword"
-              placeholder="Старый пароль"
-              value={form.currentPassword}
-              onChange={handleChange}
+              placeholder="Текущий пароль"
+              value={currentPassword}
+              onChange={e => setCurrentPassword(e.target.value)}
               required
             />
           </>
         )}
-        <input
-          type="password"
-          name="newPassword"
-          placeholder="Новый пароль"
-          value={form.newPassword}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="confirmNewPassword"
-          placeholder="Подтверждение нового пароля"
-          value={form.confirmNewPassword}
-          onChange={handleChange}
-          required
-        />
 
-        {error && <p className="aam_error">{error}</p>}
-        {message && <p className="aam_success">{message}</p>}
+        <input
+          type="password"
+          placeholder="Новый пароль"
+          value={newPassword}
+          onChange={e => setNewPassword(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Подтверждение пароля"
+          value={passwordConfirm}
+          onChange={e => setPasswordConfirm(e.target.value)}
+          required
+        />
 
         <div className="aam_password-checks">
           <p>Пароль должен содержать:</p>
@@ -177,9 +155,15 @@ const ResetPassword = () => {
           </ul>
         </div>
 
+        {error && <p className="aam_error">{error}</p>}
+        {message && <p className="aam_success">{message}</p>}
+
         <button type="submit" disabled={!formValid || loading}>
-          {loading ? (token ? 'Сброс пароля...' : 'Изменение пароля...') : (token ? 'Сбросить пароль' : 'Изменить пароль')}
+          {loading
+            ? token ? 'Сброс пароля...' : 'Изменение пароля...'
+            : token ? 'Сбросить пароль' : 'Изменить пароль'}
         </button>
+
         <a href="/">Отмена</a>
       </form>
     </div>
