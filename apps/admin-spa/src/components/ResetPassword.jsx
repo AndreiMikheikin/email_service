@@ -80,7 +80,7 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       if (token) {
-        const response = await resetPassword({ token, newPassword });
+        const response = await resetPassword({ token, password: newPassword });
         setMessage(response.message || 'Пароль успешно сброшен');
         setTimeout(() => navigate('/'), 2000);
       } else {
