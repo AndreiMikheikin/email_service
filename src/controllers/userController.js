@@ -101,6 +101,7 @@ const forgotPassword = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
+  console.log('BODY:', req.body);
   try {
     const { token, password } = req.body;
     if (!token || !password) {
