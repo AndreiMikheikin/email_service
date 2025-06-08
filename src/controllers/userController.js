@@ -132,28 +132,30 @@ const resetPassword = async (req, res) => {
 
 const changePassword = async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
-    const userId = req.user?.id;
+    const { email, oldPassword, newPassword } = req.body;
 
-    if (!userId) return res.status(401).json({ message: 'Неавторизован' });
-    if (!oldPassword || !newPassword) {
-      return res.status(400).json({ message: 'Старый и новый пароли обязательны' });
+    if (!email || !oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Email, старый и новый пароли обязательны' });
     }
 
-    const user = await userService.findUserById(userId);
-    if (!user) return res.status(404).json({ message: 'Пользователь не найден' });
+    const user = await userService.findUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
 
-    const isValid = await userService.comparePasswords(oldPassword, user.password);
+    // Проверяем старый пароль
+    const isValid = await userService.validateUser(email, oldPassword);
     if (!isValid) {
-      return res.status(403).json({ message: 'Старый пароль неверен' });
+      return res.status(401).json({ message: 'Неверный старый пароль' });
     }
 
+    // Обновляем пароль
     await userService.updatePassword(user.id, newPassword);
 
     res.json({ message: 'Пароль успешно изменён' });
   } catch (err) {
-    console.error('Ошибка смены пароля:', err);
-    res.status(500).json({ message: 'Ошибка смены пароля' });
+    console.error('changePassword ошибка:', err);
+    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
   }
 };
 
