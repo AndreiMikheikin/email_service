@@ -84,7 +84,7 @@ const ResetPassword = () => {
         setMessage(response.message || 'Пароль успешно сброшен');
         setTimeout(() => navigate('/'), 2000);
       } else {
-        const response = await changePassword({ email, currentPassword, newPassword });
+        const response = await changePassword({ email, currentPassword, password: newPassword });
         setMessage(response.message || 'Пароль успешно изменён');
         setTimeout(() => navigate('/'), 2000);
       }
