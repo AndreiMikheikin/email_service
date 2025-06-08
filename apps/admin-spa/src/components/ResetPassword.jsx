@@ -10,6 +10,8 @@ const ResetPassword = () => {
   const token = params.get('token');
 
   const [emailFromToken, setEmailFromToken] = useState('');
+  const [tokenError, setTokenError] = useState(false);
+
   const [form, setForm] = useState({
     email: '',
     currentPassword: '',
@@ -26,14 +28,14 @@ const ResetPassword = () => {
     if (token) {
       fetch(`${API_URL}/api/users/reset-token-info?token=${token}`)
         .then(res => {
-          if (!res.ok) throw new Error('Не удалось получить email');
+          if (!res.ok) throw new Error('Токен неактуален или просрочен');
           return res.json();
         })
         .then(data => {
           setEmailFromToken(data.email);
         })
         .catch(() => {
-          setEmailFromToken('');
+          setTokenError(true);
         });
     }
   }, [token]);
@@ -59,24 +61,34 @@ const ResetPassword = () => {
 
     try {
       if (token) {
-        await resetPassword({ token, newPassword });
-        setMessage('Пароль успешно сброшен');
+        const response = await resetPassword({ token, newPassword });
+        setMessage(response.message || 'Пароль успешно сброшен');
       } else {
-        await changePassword({ email, currentPassword, newPassword });
-        setMessage('Пароль успешно изменён');
+        const response = await changePassword({ email, currentPassword, newPassword });
+        setMessage(response.message || 'Пароль успешно изменён');
       }
     } catch (err) {
-      setError(err.message || 'Ошибка при изменении пароля');
+      const serverMessage = err?.response?.data?.message;
+      setError(serverMessage || err.message || 'Ошибка при изменении пароля');
     }
   };
+
+  if (token && tokenError) {
+    return (
+      <div className="aam_reset-password-container">
+        <p className="aam_error">Ссылка для сброса пароля недействительна или устарела.</p>
+        <a href="/">На главную</a>
+      </div>
+    );
+  }
 
   return (
     <div className="aam_reset-password-container">
       <form className="aam_reset-password-form" onSubmit={handleSubmit}>
         {token ? (
-          <>
-            <p>Электронная почта: <strong>{emailFromToken || 'неизвестно'}</strong></p>
-          </>
+          <p>
+            Электронная почта: <strong>{emailFromToken || '...'}</strong>
+          </p>
         ) : (
           <>
             <input
@@ -113,8 +125,21 @@ const ResetPassword = () => {
           onChange={handleChange}
           required
         />
+
         {error && <p className="aam_error">{error}</p>}
         {message && <p className="aam_success">{message}</p>}
+
+        <div className="aam_password-checks">
+          <p>Пароль должен содержать:</p>
+          <ul>
+            <li className={passwordChecks.length ? 'valid' : ''}>Минимум 8 символов</li>
+            <li className={passwordChecks.lowercase ? 'valid' : ''}>Строчную букву</li>
+            <li className={passwordChecks.uppercase ? 'valid' : ''}>Прописную букву</li>
+            <li className={passwordChecks.number ? 'valid' : ''}>Цифру</li>
+            <li className={passwordChecks.match ? 'valid' : ''}>Совпадение паролей</li>
+          </ul>
+        </div>
+
         <button type="submit">
           {token ? 'Сбросить пароль' : 'Изменить пароль'}
         </button>

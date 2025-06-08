@@ -28,6 +28,14 @@ class UserModel extends BaseModel {
     return rows[0] || null;
   }
 
+  async findByResetToken(token) {
+    const [rows] = await pool.query(
+      `SELECT id, email FROM users WHERE reset_token = ?`,
+      [token]
+    );
+    return rows[0] || null;
+  }
+
   async updatePassword(userId, newPassword) {
     const passwordHash = await hashPassword(newPassword);
     const [result] = await pool.query(

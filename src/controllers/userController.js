@@ -159,29 +159,46 @@ const login = async (req, res) => {
 
 const getResetTokenInfo = async (req, res) => {
   const { token } = req.query;
-  console.log('Token from query:', token);
 
-  if (!token) return res.status(400).json({ message: 'Токен обязателен' });
+  if (!token) {
+    console.warn('Токен не передан в запросе');
+    return res.status(400).json({ message: 'Токен обязателен' });
+  }
 
   try {
+    // Декодируем токен
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
+    const userId = decoded.id;
 
-    const user = await userService.findUserById(decoded.id);
-    console.log('User from DB:', user);
-
-    if (!user || user.reset_token !== token) {
-      return res.status(404).json({ message: 'Пользователь не найден или токен неактуален' });
+    if (!userId) {
+      console.warn('Токен не содержит id пользователя');
+      return res.status(400).json({ message: 'Неверный токен' });
     }
 
-    console.log('Отправляю email:', user.email);
-    res.json({ email: user.email });
-    console.log('Ответ с email отправлен клиенту');
+    // Получаем пользователя из БД
+    const user = await userService.findUserById(userId);
+
+    if (!user) {
+      console.warn(`Пользователь с id ${userId} не найден`);
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+
+    // Сравниваем токен
+    if (user.reset_token !== token) {
+      console.warn('Токен не совпадает с сохранённым в базе');
+      return res.status(400).json({ message: 'Токен неактуален или уже использован' });
+    }
+
+    // Всё хорошо
+    console.log(`Email ${user.email} найден и подтверждён по токену`);
+    return res.json({ email: user.email });
+
   } catch (error) {
-    console.error('Ошибка в getResetTokenInfo:', error);
-    res.status(400).json({ message: 'Неверный или просроченный токен' });
+    console.error('Ошибка при проверке токена сброса пароля:', error.message);
+    return res.status(400).json({ message: 'Неверный или просроченный токен' });
   }
 };
+
 
 export default {
   register,
