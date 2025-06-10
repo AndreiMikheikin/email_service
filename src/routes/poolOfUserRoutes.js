@@ -10,9 +10,9 @@ import authMiddleware, { adminOnlyMiddleware } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.post('/', authMiddleware, adminOnlyMiddleware, createPoolUser);
-router.get('/', authMiddleware, adminOnlyMiddleware, getPoolUsers);
-router.delete('/:id', authMiddleware, adminOnlyMiddleware, deletePoolUser);
-router.put('/:id', authMiddleware, adminOnlyMiddleware, updatePoolUser);
+router.post('/create', authMiddleware, adminOnlyMiddleware, createPoolUser);
+router.get('/clientUsers', authMiddleware, adminOnlyMiddleware, getPoolUsers);
+router.delete('/delete/:id', authMiddleware, adminOnlyMiddleware, deletePoolUser);
+router.put('/edit/:id', authMiddleware, adminOnlyMiddleware, updatePoolUser);
 
 export default router;

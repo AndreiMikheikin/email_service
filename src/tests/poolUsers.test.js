@@ -40,7 +40,7 @@ afterAll(async () => {
 describe('Pool of Users', () => {
     it('создаёт client-пользователя', async () => {
         const res = await request(app)
-            .post('/api/adminDashboard')
+            .post('/api/adminDashboard/create')
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ email: clientEmail, password: clientPassword });
 
@@ -51,7 +51,7 @@ describe('Pool of Users', () => {
 
     it('возвращает список client-пользователей', async () => {
         const res = await request(app)
-            .get('/api/adminDashboard')
+            .get('/api/adminDashboard/clientUsers')
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(res.statusCode).toBe(200);
@@ -61,7 +61,7 @@ describe('Pool of Users', () => {
 
     it('обновляет email client-пользователя', async () => {
         const res = await request(app)
-            .put(`/api/adminDashboard/${createdUserId}`)
+            .put(`/api/adminDashboard/edit/${createdUserId}`)
             .set('Authorization', `Bearer ${adminToken}`)
             .send({ email: 'client-updated@pool.test' });
 
@@ -71,7 +71,7 @@ describe('Pool of Users', () => {
 
     it('удаляет client-пользователя', async () => {
         const res = await request(app)
-            .delete(`/api/adminDashboard/${createdUserId}`)
+            .delete(`/api/adminDashboard/delete/${createdUserId}`)
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(res.statusCode).toBe(200);
