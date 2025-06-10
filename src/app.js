@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Основной роутер
 app.use('/api/users', userRoutes);
-app.use('/api/adminDashboard/', poolOfUserRoutes);
+app.use('/api/adminDashboard', poolOfUserRoutes);
 
 app.get('/health', (_, res) => res.send('OK'));
 
