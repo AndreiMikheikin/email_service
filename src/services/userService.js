@@ -1,7 +1,7 @@
 import userModel from '../models/user.js';
 import { comparePassword } from '../utils/hash.js';
 
-const createUser = async ({ email, password, role = 'user', planId = null }) => {
+const createUser = async ({ email, password, role = 'admin', planId = null }) => {
   const existing = await userModel.findByEmail(email);
   if (existing) {
     throw new Error('Пользователь с таким email уже существует');
