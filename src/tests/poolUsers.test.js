@@ -55,8 +55,8 @@ describe('Pool of Users', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(res.statusCode).toBe(200);
-        expect(Array.isArray(res.body)).toBe(true);
-        expect(res.body.find(u => u.email === clientEmail)).toBeDefined();
+        expect(Array.isArray(res.body.users)).toBe(true);
+        expect(res.body.users.find(u => u.email === clientEmail)).toBeDefined();
     });
 
     it('обновляет email client-пользователя', async () => {
