@@ -23,3 +23,21 @@ export const sendMail = async ({ to, subject, html }) => {
     throw err;
   }
 };
+
+/**
+ * Отправка уведомления о создании client-пользователя
+ * @param {string} toEmail — Email клиента
+ * @param {string} password — Пароль клиента
+ * @param {string} adminEmail — Email администратора, который создал
+ */
+export const sendUserCreatedEmail = async (toEmail, password, adminEmail) => {
+  const subject = 'Вам предоставлен доступ к Email-сервису';
+  const html = `
+    <p>Администратор <b>${adminEmail}</b> предоставил вам доступ.</p>
+    <p>Ваш логин: <b>${toEmail}</b></p>
+    <p>Ваш пароль: <b>${password}</b></p>
+    <p>Используйте эти данные для входа в клиентский интерфейс Email-сервиса.</p>
+  `;
+
+  await sendMail({ to: toEmail, subject, html });
+};

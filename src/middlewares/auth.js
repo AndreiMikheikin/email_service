@@ -19,3 +19,12 @@ export default function authMiddleware(req, res, next) {
     res.status(403).json({ message: err.message });
   }
 }
+
+// Только для admin-роли
+export function adminOnlyMiddleware(req, res, next) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: 'Доступ только для администраторов' });
+  }
+
+  next();
+}

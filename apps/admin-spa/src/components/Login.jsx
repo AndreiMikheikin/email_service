@@ -17,7 +17,6 @@ const Login = () => {
     setMessage('');
     try {
       const data = await loginUser({ email, password });
-      console.log('LOGIN DATA:', data);
       localStorage.setItem('authToken', data.token);
       navigate('/adminDashboard');
     } catch (err) {

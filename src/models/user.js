@@ -7,7 +7,7 @@ class UserModel extends BaseModel {
     super('users');
   }
 
-  async create({ email, password, role = 'user', planId = null }) {
+  async create({ email, password, role = 'admin', planId = null }) {
     const passwordHash = await hashPassword(password);
 
     const [result] = await pool.query(
