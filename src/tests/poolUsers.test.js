@@ -10,71 +10,71 @@ let adminToken = '';
 let createdUserId = null;
 
 beforeAll(async () => {
-  // Чистим админа и пул клиентов
-  await pool.query('DELETE FROM users WHERE email = ?', [testAdminEmail]);
-  await pool.query('DELETE FROM pool_of_users WHERE email = ?', [clientEmail]);
+    // Чистим админа и пул клиентов
+    await pool.query('DELETE FROM users WHERE email = ?', [testAdminEmail]);
+    await pool.query('DELETE FROM pool_of_users WHERE email = ?', [clientEmail]);
 
-  // Регистрируем админа
-  await request(app)
-    .post('/api/users/register')
-    .send({ email: testAdminEmail, password: testAdminPassword });
+    // Регистрируем админа
+    await request(app)
+        .post('/api/users/register')
+        .send({ email: testAdminEmail, password: testAdminPassword });
 
-  // Подтверждаем email
-  await pool.query('UPDATE users SET email_confirmed = 1 WHERE email = ?', [testAdminEmail]);
+    // Подтверждаем email
+    await pool.query('UPDATE users SET email_confirmed = 1 WHERE email = ?', [testAdminEmail]);
 
-  // Получаем токен
-  const loginRes = await request(app)
-    .post('/api/users/login')
-    .send({ email: testAdminEmail, password: testAdminPassword });
+    // Получаем токен
+    const loginRes = await request(app)
+        .post('/api/users/login')
+        .send({ email: testAdminEmail, password: testAdminPassword });
 
-  adminToken = loginRes.body.token;
+    adminToken = loginRes.body.token;
 });
 
 afterAll(async () => {
-  // Чистим
-  await pool.query('DELETE FROM pool_of_users WHERE email = ?', [clientEmail]);
-  await pool.query('DELETE FROM users WHERE email = ?', [testAdminEmail]);
-  await pool.end();
+    // Чистим
+    await pool.query('DELETE FROM pool_of_users WHERE email = ?', [clientEmail]);
+    await pool.query('DELETE FROM users WHERE email = ?', [testAdminEmail]);
+    await pool.end();
 });
 
 describe('Pool of Users', () => {
-  it('создаёт client-пользователя', async () => {
-    const res = await request(app)
-      .post('/api/adminDashboard/pool-users/create')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({ email: clientEmail, password: clientPassword });
+    it('создаёт client-пользователя', async () => {
+        const res = await request(app)
+            .post('/api/adminDashboard')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ email: clientEmail, password: clientPassword });
 
-    expect(res.statusCode).toBe(201);
-    expect(res.body.userId).toBeDefined();
-    createdUserId = res.body.userId;
-  });
+        expect(res.statusCode).toBe(201);
+        expect(res.body.userId).toBeDefined();
+        createdUserId = res.body.userId;
+    });
 
-  it('возвращает список client-пользователей', async () => {
-    const res = await request(app)
-      .get('/api/adminDashboard/pool-users')
-      .set('Authorization', `Bearer ${adminToken}`);
+    it('возвращает список client-пользователей', async () => {
+        const res = await request(app)
+            .get('/api/adminDashboard')
+            .set('Authorization', `Bearer ${adminToken}`);
 
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.find(u => u.email === clientEmail)).toBeDefined();
-  });
+        expect(res.statusCode).toBe(200);
+        expect(Array.isArray(res.body)).toBe(true);
+        expect(res.body.find(u => u.email === clientEmail)).toBeDefined();
+    });
 
-  it('обновляет email client-пользователя', async () => {
-    const res = await request(app)
-      .put(`/api/adminDashboard/pool-users/${createdUserId}`)
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({ email: 'client-updated@pool.test' });
+    it('обновляет email client-пользователя', async () => {
+        const res = await request(app)
+            .put(`/api/adminDashboard/${createdUserId}`)
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({ email: 'client-updated@pool.test' });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toMatch(/обновлён/i);
-  });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.message).toMatch(/обновлён/i);
+    });
 
-  it('удаляет client-пользователя', async () => {
-    const res = await request(app)
-      .delete(`/api/adminDashboard/pool-users/${createdUserId}`)
-      .set('Authorization', `Bearer ${adminToken}`);
+    it('удаляет client-пользователя', async () => {
+        const res = await request(app)
+            .delete(`/api/adminDashboard/${createdUserId}`)
+            .set('Authorization', `Bearer ${adminToken}`);
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.message).toMatch(/удалён/i);
-  });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.message).toMatch(/удалён/i);
+    });
 });

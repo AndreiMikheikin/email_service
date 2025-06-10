@@ -10,7 +10,7 @@ import authMiddleware, { adminOnlyMiddleware } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.post('/create', authMiddleware, adminOnlyMiddleware, createPoolUser);
+router.post('/', authMiddleware, adminOnlyMiddleware, createPoolUser);
 router.get('/', authMiddleware, adminOnlyMiddleware, getPoolUsers);
 router.delete('/:id', authMiddleware, adminOnlyMiddleware, deletePoolUser);
 router.put('/:id', authMiddleware, adminOnlyMiddleware, updatePoolUser);
