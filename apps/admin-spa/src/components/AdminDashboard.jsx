@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdminDashboard } from '../api/auth';
-
 import ClientUsersBox from './ClientUsersBox';
 import AddClientUserModal from './AddClientUserModal';
 
 const AdminDashboard = () => {
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [reloadFlag, setReloadFlag] = useState(false); // для обновления списка
+
+  const triggerReload = () => setReloadFlag(prev => !prev); // смена флага
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -23,10 +24,6 @@ const AdminDashboard = () => {
 
     loadDashboard();
   }, []);
-
-  const handleOpenModal = () => setShowAddUserModal(true);
-  const handleCloseModal = () => setShowAddUserModal(false);
-  const handleUserAdded = () => setRefreshKey((prev) => prev + 1);
 
   return (
     <>
@@ -45,18 +42,17 @@ const AdminDashboard = () => {
 
       <main className="aam_dashboard_main">
         <div className="aam_dashboard_preview-grid">
-          <ClientUsersBox
-            onAddUserClick={handleOpenModal}
-            refreshKey={refreshKey}
-          />
+          <ClientUsersBox onAddClick={() => setIsModalOpen(true)} reloadFlag={reloadFlag} />
         </div>
-        <div className="aam_dashboard_preview-single">{/* TemlatesBox */}</div>
       </main>
 
       <AddClientUserModal
-        isOpen={showAddUserModal}
-        onClose={handleCloseModal}
-        onUserAdded={handleUserAdded}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onUserAdded={() => {
+          triggerReload();
+          setIsModalOpen(false);
+        }}
       />
 
       <footer className="aam_dashboard_footer">

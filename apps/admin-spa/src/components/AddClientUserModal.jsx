@@ -1,20 +1,51 @@
-import React from 'react';
-import AddClientUserForm from './AddClientUserForm';
+import React, { useState } from 'react';
+import { createPoolUser } from '../api/clientUsers';
 
 const AddClientUserModal = ({ isOpen, onClose, onUserAdded }) => {
-  if (!isOpen) return null;
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState(null);
 
-  const handleUserAdded = () => {
-    onUserAdded();     // обновить список
-    onClose();         // закрыть модалку
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+    try {
+      await createPoolUser({ email, password });
+      setEmail('');
+      setPassword('');
+      onUserAdded(); // триггерим обновление и закрытие
+    } catch (err) {
+      setMessage(`Ошибка: ${err.message}`);
+    }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="aam_modal-overlay" onClick={onClose}>
-      <div className="aam_modal" onClick={(e) => e.stopPropagation()}>
+    <div className="aam_modal-overlay">
+      <div className="aam_modal">
+        <button className="aam_modal__close" onClick={onClose}>×</button>
         <h3 className="aam_modal__title">Добавить пользователя</h3>
-        <AddClientUserForm onUserAdded={handleUserAdded} />
-        <button className="aam_modal__close" onClick={onClose}>Закрыть</button>
+
+        <form className="aam_box__form" onSubmit={handleSubmit}>
+          <input
+            type="email"
+            placeholder="Email пользователя"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Пароль"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit">Добавить</button>
+        </form>
+
+        {message && <p className="aam_box__message">{message}</p>}
       </div>
     </div>
   );
