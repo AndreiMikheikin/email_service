@@ -28,6 +28,18 @@ export const getPoolUsers = async () => {
   }
 };
 
+export const createPoolUser = async ({ email, password }) => {
+  try {
+    const response = await apiClient.post('/api/adminDashboard/clientUsers/create', {
+      email,
+      password
+    });
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('authToken');
   if (token) {
