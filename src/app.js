@@ -3,7 +3,7 @@
 import express from 'express';
 import cors from 'cors';
 import userRoutes from './routes/userRoutes.js';
-import poolOfUserRoutes from './routes/poolOfUserRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 
 const app = express();
 
@@ -16,7 +16,7 @@ app.use(express.json());
 
 // Основной роутер
 app.use('/api/users', userRoutes);
-app.use('/api/adminDashboard', poolOfUserRoutes);
+app.use('/api/adminDashboard', dashboardRoutes);
 
 app.get('/health', (_, res) => res.send('OK'));
 

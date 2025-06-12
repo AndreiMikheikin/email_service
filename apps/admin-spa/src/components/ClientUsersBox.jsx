@@ -1,64 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { getPoolUsers } from '../api/clientUsers';
 import { useNavigate } from 'react-router-dom';
-import { getClientUsers } from '../api/clientUsers';
 
 const ClientUsersBox = () => {
-  const [clientUsers, setClientUsers] = useState([]);
-  const [selectedUserId, setSelectedUserId] = useState(null);
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+    const navigate = useNavigate();
+    const [users, setUsers] = useState([]);
+    const [selectedUserId, setSelectedUserId] = useState(null);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const users = await getClientUsers();
-        setClientUsers(users);
-      } catch (err) {
-        setError(err.message);
-      }
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const data = await getPoolUsers();
+                setUsers(data);
+            } catch (err) {
+                console.error('Ошибка при получении пользователей:', err.message);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+    const handleSelect = (id) => {
+        setSelectedUserId(id === selectedUserId ? null : id);
     };
 
-    fetchUsers();
-  }, []);
+    const goToCreate = () => navigate('/adminDashboard/clientUsers/create');
+    const goToEdit = () => {
+        if (selectedUserId) navigate(`/adminDashboard/clientUsers/${selectedUserId}`);
+    };
 
-  const handleUserClick = (id) => {
-    setSelectedUserId(id);
-  };
+    return (
+        <section className="aam_box">
+            <h2 className="aam_box__title">Пользователи клиента</h2>
 
-  const handleButtonClick = () => {
-    if (selectedUserId) {
-      navigate(`/adminDashboard/clientUsers/edit/${selectedUserId}`);
-    } else {
-      navigate('/adminDashboard/clientUsers/create');
-    }
-  };
+            <ul className="aam_box__list">
+                {users.map((user) => (
+                    <li
+                        key={user.id}
+                        className={`aam_box__list-item ${selectedUserId === user.id ? 'aam_box__list-item--selected' : ''
+                            }`}
+                        onClick={() => handleSelect(user.id)}
+                    >
+                        {user.email}
+                    </li>
+                ))}
+            </ul>
 
-  return (
-    <section className="aam_clientUsersBox">
-      <h2 className="aam_clientUsersBox_title">Пользователи</h2>
-
-      {error && <p className="aam_clientUsersBox_error">{error}</p>}
-
-      <ul className="aam_clientUsersBox_list">
-        {clientUsers.map(user => (
-          <li
-            key={user.id}
-            className={`aam_clientUsersBox_item ${selectedUserId === user.id ? 'aam_selected' : ''}`}
-            onClick={() => handleUserClick(user.id)}
-          >
-            {user.email}
-          </li>
-        ))}
-      </ul>
-
-      <button
-        className="aam_clientUsersBox_button"
-        onClick={handleButtonClick}
-      >
-        {selectedUserId ? 'Редактировать пользователя' : 'Добавить пользователя'}
-      </button>
-    </section>
-  );
+            <div className="aam_box__actions">
+                <button className="aam_box__button" onClick={goToCreate}>
+                    Добавить пользователя
+                </button>
+                <button
+                    className="aam_box__button"
+                    onClick={goToEdit}
+                    disabled={!selectedUserId}
+                >
+                    Редактировать пользователя
+                </button>
+            </div>
+        </section>
+    );
 };
 
 export default ClientUsersBox;

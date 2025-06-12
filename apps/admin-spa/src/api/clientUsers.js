@@ -7,7 +7,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: true,
 });
 
 export const handleError = (error) => {
@@ -16,10 +16,11 @@ export const handleError = (error) => {
   throw new Error(message);
 };
 
-export const getClientUsers = async () => {
+// ✅ Запрос к новому эндпоинту clientUsers
+export const getPoolUsers = async () => {
   try {
     const response = await apiClient.get('/api/adminDashboard/clientUsers');
-    return response.data; // должен вернуть массив пользователей
+    return response.data;
   } catch (error) {
     return handleError(error);
   }
