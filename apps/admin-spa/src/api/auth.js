@@ -88,7 +88,7 @@ export const confirmEmail = async (token) => {
 
 export const fetchAdminDashboard = async () => {
   try {
-    const response = await apiClient.get('/api/users/adminDashboard');
+    const response = await apiClient.get('/api/adminDashboard');
     return response.data;
   } catch (error) {
     return handleError(error);

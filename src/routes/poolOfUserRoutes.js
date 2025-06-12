@@ -6,13 +6,12 @@ import {
   deletePoolUser,
   updatePoolUser
 } from '../controllers/poolOfUserController.js';
-import authMiddleware, { adminOnlyMiddleware } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-router.post('/create', authMiddleware, adminOnlyMiddleware, createPoolUser);
-router.get('/clientUsers', authMiddleware, adminOnlyMiddleware, getPoolUsers);
-router.delete('/delete/:id', authMiddleware, adminOnlyMiddleware, deletePoolUser);
-router.put('/edit/:id', authMiddleware, adminOnlyMiddleware, updatePoolUser);
+router.post('/create', createPoolUser);
+router.get('/', getPoolUsers);
+router.delete('/delete/:id', deletePoolUser);
+router.put('/edit/:id', updatePoolUser);
 
 export default router;

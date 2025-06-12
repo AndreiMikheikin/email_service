@@ -10,6 +10,6 @@ router.get('/', authMiddleware, adminOnlyMiddleware, (req, res) => {
 });
 
 // Подмаршрут для работы с pool_of_users
-router.use('/pool-users', authMiddleware, adminOnlyMiddleware, poolUserRoutes);
+router.use('/clientUsers', authMiddleware, adminOnlyMiddleware, poolUserRoutes);
 
 export default router;
