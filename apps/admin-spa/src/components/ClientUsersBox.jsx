@@ -33,18 +33,22 @@ const ClientUsersBox = () => {
         <section className="aam_box">
             <h2 className="aam_box__title">Пользователи клиента</h2>
 
-            <ul className="aam_box__list">
-                {users.map((user) => (
-                    <li
-                        key={user.id}
-                        className={`aam_box__list-item ${selectedUserId === user.id ? 'aam_box__list-item--selected' : ''
-                            }`}
-                        onClick={() => handleSelect(user.id)}
-                    >
-                        {user.email}
-                    </li>
-                ))}
-            </ul>
+            {Array.isArray(users) && users.length > 0 ? (
+                <ul className="aam_box__list">
+                    {users.map((user) => (
+                        <li
+                            key={user.id}
+                            className={`aam_box__list-item ${selectedUserId === user.id ? 'aam_box__list-item--selected' : ''
+                                }`}
+                            onClick={() => handleSelect(user.id)}
+                        >
+                            {user.email}
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p className="aam_box__list-empty">Нет доступных пользователей.</p>
+            )}
 
             <div className="aam_box__actions">
                 <button className="aam_box__button" onClick={goToCreate}>
