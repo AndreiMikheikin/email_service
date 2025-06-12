@@ -41,6 +41,24 @@ export const createPoolUser = async ({ email, password }) => {
   }
 };
 
+export const updatePoolUserPassword = async (id, password) => {
+  try {
+    const response = await apiClient.put(`/api/adminDashboard/clientUsers/${id}`, { password });
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
+export const deletePoolUser = async (id) => {
+  try {
+    const response = await apiClient.delete(`/api/adminDashboard/clientUsers/${id}`);
+    return response.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('authToken');
   if (token) {
