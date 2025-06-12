@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getPoolUsers } from '../api/clientUsers';
-import { useNavigate } from 'react-router-dom';
 
-const ClientUsersBox = ({ onAddClick, reloadFlag }) => {
-  const navigate = useNavigate();
+const ClientUsersBox = ({ onAddClick, onEditClick, reloadFlag }) => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
 
@@ -25,8 +23,9 @@ const ClientUsersBox = ({ onAddClick, reloadFlag }) => {
     setSelectedUserId(id === selectedUserId ? null : id);
   };
 
-  const goToEdit = () => {
-    if (selectedUserId) navigate(`/adminDashboard/clientUsers/${selectedUserId}`);
+  const handleEditClick = () => {
+    const selectedUser = users.find((u) => u.id === selectedUserId);
+    if (selectedUser) onEditClick(selectedUser);
   };
 
   return (
@@ -55,7 +54,7 @@ const ClientUsersBox = ({ onAddClick, reloadFlag }) => {
         </button>
         <button
           className="aam_box__button"
-          onClick={goToEdit}
+          onClick={handleEditClick}
           disabled={!selectedUserId}
         >
           Редактировать пользователя
