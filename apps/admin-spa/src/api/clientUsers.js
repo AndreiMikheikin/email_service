@@ -22,6 +22,7 @@ export const handleError = (error) => {
 export const getPoolUsers = async () => {
   try {
     const response = await apiClient.get('/api/adminDashboard/clientUsers');
+    console.log('API response:', response.data);
     return response.data;
   } catch (error) {
     return handleError(error);

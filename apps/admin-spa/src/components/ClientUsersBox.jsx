@@ -11,7 +11,8 @@ const ClientUsersBox = ({ onAddClick, reloadFlag }) => {
     const fetchUsers = async () => {
       try {
         const data = await getPoolUsers();
-        setUsers(data);
+        console.log('Полученные пользователи:', data);
+        setUsers(data.users);
       } catch (err) {
         console.error('Ошибка при получении пользователей:', err.message);
       }
