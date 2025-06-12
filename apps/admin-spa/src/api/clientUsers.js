@@ -43,7 +43,7 @@ export const createPoolUser = async ({ email, password }) => {
 
 export const updatePoolUserPassword = async (id, password) => {
   try {
-    const response = await apiClient.put(`/api/adminDashboard/clientUsers/${id}`, { password });
+    const response = await apiClient.put(`/api/adminDashboard/clientUsers/edit/${id}`, { password });
     return response.data;
   } catch (error) {
     return handleError(error);
@@ -52,7 +52,7 @@ export const updatePoolUserPassword = async (id, password) => {
 
 export const deletePoolUser = async (id) => {
   try {
-    const response = await apiClient.delete(`/api/adminDashboard/clientUsers/${id}`);
+    const response = await apiClient.delete(`/api/adminDashboard/clientUsers/delete/${id}`);
     return response.data;
   } catch (error) {
     return handleError(error);
