@@ -1,0 +1,10 @@
+CREATE TABLE sent_emails (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  admin_id INT NOT NULL,
+  user_id INT NOT NULL,
+  recipient_email VARCHAR(255) NOT NULL,
+  subject VARCHAR(255),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES pool_of_users(id) ON DELETE CASCADE
+);

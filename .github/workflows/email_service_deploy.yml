@@ -1,4 +1,4 @@
-name: Deploy Email Service and Admin SPA
+name: Deploy Email Service, Admin SPA and Client SPA
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - 'src/**'
       - 'sql/**'
       - 'apps/admin-spa/**'
+      - 'apps/client-spa/**'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/deploy.yml'
@@ -24,7 +25,7 @@ jobs:
         node-version: 20
         cache: 'npm'
 
-    # --- Синхронизация зависимостей admin-spa ---
+    # --- admin-spa install ---
     - name: Sync admin-spa dependencies
       working-directory: ./apps/admin-spa
       run: |
@@ -32,9 +33,21 @@ jobs:
         npm install
         npm install path-to-regexp@6.3.0 --save-exact
 
-    # --- Сборка admin-spa ---
+    # --- admin-spa build ---
     - name: Build admin-spa
       working-directory: ./apps/admin-spa
+      run: npm run build
+
+    # --- client-spa install ---
+    - name: Sync client-spa dependencies
+      working-directory: ./apps/client-spa
+      run: |
+        rm -rf node_modules package-lock.json
+        npm install
+
+    # --- client-spa build ---
+    - name: Build client-spa
+      working-directory: ./apps/client-spa
       run: npm run build
 
     # --- Подготовка deployment для email-service ---
@@ -45,7 +58,6 @@ jobs:
         cp -r sql deployment/
         cp package.json deployment/
         cp package-lock.json deployment/
-        # Исключаем ecosystem.config.cjs из копирования
 
     # --- Проверка SSH ключа ---
     - name: Validate SSH Key
@@ -67,7 +79,7 @@ jobs:
         port: 22
         source: "deployment/*"
         target: "/root/email-service/"
-        rm: false  # Не удалять целевые файлы перед копированием
+        rm: false
         overwrite: true
         strip_components: 1
         timeout: 2m
@@ -82,7 +94,22 @@ jobs:
         port: 22
         source: "apps/admin-spa/dist/*,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json"
         target: "/root/email-service/apps/admin-spa/"
-        rm: false  # Не удалять целевые файлы перед копированием
+        rm: false
+        overwrite: true
+        strip_components: 2
+        timeout: 2m
+
+    # --- Деплой client-spa ---
+    - name: Deploy client-spa
+      uses: appleboy/scp-action@v0.1.5
+      with:
+        host: 178.250.247.67
+        username: root
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        source: "apps/client-spa/dist/*,apps/client-spa/server.js,apps/client-spa/package.json,apps/client-spa/package-lock.json"
+        target: "/root/email-service/apps/client-spa/"
+        rm: false
         overwrite: true
         strip_components: 2
         timeout: 2m
@@ -96,19 +123,26 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          # Установка email-service
+          # email-service
           cd /root/email-service
           rm -rf node_modules
           npm ci --production
           
-          # Установка admin-spa (сохраняем .env)
+          # admin-spa
           cd /root/email-service/apps/admin-spa
-          [ -f .env ] && cp .env .env.backup  # Резервная копия .env если существует
+          [ -f .env ] && cp .env .env.backup
           rm -rf node_modules
           npm ci --production
-          [ -f .env.backup ] && mv .env.backup .env  # Восстанавливаем .env
+          [ -f .env.backup ] && mv .env.backup .env
           
-          # Перезапуск сервисов
+          # client-spa
+          cd /root/email-service/apps/client-spa
+          [ -f .env ] && cp .env .env.backup
+          rm -rf node_modules
+          npm ci --production
+          [ -f .env.backup ] && mv .env.backup .env
+          
+          # Перезапуск
           cd /root/email-service
           pm2 reload ecosystem.config.cjs
           pm2 save
