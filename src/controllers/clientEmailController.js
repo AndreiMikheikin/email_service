@@ -1,6 +1,5 @@
 import EmailSendLog from '../models/emailSendLog.js';
 import { sendHtmlEmail } from '../services/emailService.js'; // функция отправки email
-import pool from '../config/db.js';
 
 export const sendClientEmail = async (req, res) => {
   const { recipient_email, subject, html } = req.body;
