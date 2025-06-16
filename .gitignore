@@ -2,7 +2,7 @@
 .env
 node_modules/
 ecosystem.config.cjs
-*README.md
+**/README.md
 
 # SPA-приложения (если отдельные env)
 apps/**/.env
