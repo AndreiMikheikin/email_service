@@ -14,7 +14,7 @@ export const sendClientEmail = async (req, res) => {
       from: sender_email, // или кастомный адрес отправителя, если есть
       to: recipient_email,
       subject,
-      html
+      html: html || `<pre>${text}</pre>`
     });
 
     await EmailSendLog.log({ admin_id, user_id, recipient_email });
