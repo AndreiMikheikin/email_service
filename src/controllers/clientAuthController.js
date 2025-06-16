@@ -21,7 +21,8 @@ const clientAuthController = {
         {
           user_id: user.id,
           admin_id: user.admin_id,
-          email: user.email
+          email: user.email,
+          role: 'client'
         },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
