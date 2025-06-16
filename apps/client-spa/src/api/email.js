@@ -1,5 +1,5 @@
 export async function sendEmail(data) {
-  const response = await fetch('http://178.250.247.67:3000/api/client/send-email', {
+  const response = await fetch('http://178.250.247.67:3355/api/client/send-email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
