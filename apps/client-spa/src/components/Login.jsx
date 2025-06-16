@@ -13,7 +13,13 @@ const Login = () => {
     setError('');
     try {
       const { token } = await login({ email, password });
+
+      const user = { email, token };
+
       localStorage.setItem('client_token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      onLogin(user); // сообщаем App'у
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Ошибка входа');

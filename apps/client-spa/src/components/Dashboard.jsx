@@ -49,6 +49,16 @@ const Dashboard = ({ user }) => {
 
     return (
         <div className="aam_dashboard">
+            <button
+                className="aam_dashboard__button aam_dashboard__button--logout"
+                onClick={() => {
+                    localStorage.removeItem('client_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                }}
+            >
+                Выйти
+            </button>
             <h2 className="aam_dashboard__title">Отправка Email</h2>
             <form className="aam_dashboard__form" onSubmit={handleSubmit}>
                 <label className="aam_dashboard__label">От кого:</label>
