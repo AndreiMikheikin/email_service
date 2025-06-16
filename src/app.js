@@ -10,7 +10,10 @@ import clientEmailRoutes from './routes/clientEmailRoutes.js';
 const app = express();
 
 app.use(cors({
-  origin: 'http://178.250.247.67:3344',
+  origin: [
+    'http://178.250.247.67:3344', // admin-spa
+    'http://178.250.247.67:3345'  // client-spa
+  ],
   credentials: true
 }));
 
