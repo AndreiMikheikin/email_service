@@ -39,10 +39,15 @@ const Dashboard = ({ user }) => {
 
     setLoading(true);
 
+    const payload = {
+      recipient_email: form.to.trim(),
+      subject: form.subject.trim(),
+      html: form.html.trim() || form.text.trim()
+    };
+
     try {
-      await sendEmail(form);
+      await sendEmail(payload);
       setStatus({ success: true, message: 'Письмо успешно отправлено!' });
-      // Можно почистить форму кроме поля from, если нужно:
       setForm(prev => ({ ...prev, to: '', subject: '', text: '', html: '' }));
     } catch (err) {
       setStatus({ success: false, message: err.response?.data?.message || err.message || 'Ошибка при отправке письма.' });
