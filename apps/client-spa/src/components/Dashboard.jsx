@@ -1,132 +1,145 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { sendEmail } from '../api/email';
 import '../styles/components/_dashboard.scss';
 
 const Dashboard = ({ user }) => {
-    const [form, setForm] = useState({
-        from: user?.email || '',
-        to: '',
-        subject: '',
-        text: '',
-        html: '',
-    });
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        // На случай, если email появится после монтирования (например, после login)
-        if (user?.email && !form.from) {
-            setForm(prev => ({ ...prev, from: user.email }));
-        }
-    }, [user]);
+  const [form, setForm] = useState({
+    from: user?.email || '',
+    to: '',
+    subject: '',
+    text: '',
+    html: '',
+  });
 
-    const [status, setStatus] = useState(null);
-    const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (user?.email && !form.from) {
+      setForm(prev => ({ ...prev, from: user.email }));
+    }
+  }, [user, form.from]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-    };
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setStatus(null);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
 
-        if (!form.to || (!form.text && !form.html)) {
-            setStatus({ success: false, message: 'Укажите получателя и хотя бы одно тело письма.' });
-            setLoading(false);
-            return;
-        }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus(null);
 
-        try {
-            await sendEmail(form);
-            setStatus({ success: true, message: 'Письмо успешно отправлено!' });
-        } catch (err) {
-            setStatus({ success: false, message: err?.response?.data?.message || 'Ошибка при отправке письма.' });
-        } finally {
-            setLoading(false);
-        }
-    };
+    if (!form.to.trim() || (!form.text.trim() && !form.html.trim())) {
+      setStatus({ success: false, message: 'Укажите получателя и хотя бы одно тело письма.' });
+      return;
+    }
 
-    return (
-        <div className="aam_dashboard">
-            <button
-                className="aam_dashboard__button aam_dashboard__button--logout"
-                onClick={() => {
-                    localStorage.removeItem('client_token');
-                    localStorage.removeItem('user');
-                    window.location.href = '/';
-                }}
-            >
-                Выйти
-            </button>
-            <h2 className="aam_dashboard__title">Отправка Email</h2>
-            <form className="aam_dashboard__form" onSubmit={handleSubmit}>
-                <label className="aam_dashboard__label">От кого:</label>
-                <input
-                    className="aam_dashboard__input"
-                    name="from"
-                    type="email"
-                    value={form.from}
-                    disabled
-                />
+    setLoading(true);
 
-                <label className="aam_dashboard__label">Email получателя:</label>
-                <input
-                    className="aam_dashboard__input"
-                    name="to"
-                    type="email"
-                    value={form.to}
-                    onChange={handleChange}
-                    required
-                />
+    try {
+      await sendEmail(form);
+      setStatus({ success: true, message: 'Письмо успешно отправлено!' });
+      // Можно почистить форму кроме поля from, если нужно:
+      setForm(prev => ({ ...prev, to: '', subject: '', text: '', html: '' }));
+    } catch (err) {
+      setStatus({ success: false, message: err.response?.data?.message || err.message || 'Ошибка при отправке письма.' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-                <label className="aam_dashboard__label">Тема:</label>
-                <input
-                    className="aam_dashboard__input"
-                    name="subject"
-                    type="text"
-                    value={form.subject}
-                    onChange={handleChange}
-                />
+  const handleLogout = () => {
+    localStorage.removeItem('client_token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
 
-                <label className="aam_dashboard__label">Текст (plain):</label>
-                <textarea
-                    className="aam_dashboard__textarea"
-                    name="text"
-                    value={form.text}
-                    onChange={handleChange}
-                />
+  return (
+    <div className="aam_dashboard">
+      <button
+        className="aam_dashboard__button aam_dashboard__button--logout"
+        onClick={handleLogout}
+      >
+        Выйти
+      </button>
 
-                <label className="aam_dashboard__label">HTML:</label>
-                <textarea
-                    className="aam_dashboard__textarea"
-                    name="html"
-                    value={form.html}
-                    onChange={handleChange}
-                />
+      <h2 className="aam_dashboard__title">Отправка Email</h2>
 
-                <button
-                    className="aam_dashboard__button"
-                    type="submit"
-                    disabled={loading}
-                >
-                    {loading ? 'Отправка...' : 'Отправить'}
-                </button>
+      <form className="aam_dashboard__form" onSubmit={handleSubmit}>
+        <label className="aam_dashboard__label" htmlFor="from">От кого:</label>
+        <input
+          id="from"
+          className="aam_dashboard__input"
+          name="from"
+          type="email"
+          value={form.from}
+          disabled
+        />
 
-                {status && (
-                    <div
-                        className={
-                            status.success
-                                ? 'aam_dashboard__status aam_dashboard__status--success'
-                                : 'aam_dashboard__status aam_dashboard__status--error'
-                        }
-                    >
-                        {status.message}
-                    </div>
-                )}
-            </form>
-        </div>
-    );
+        <label className="aam_dashboard__label" htmlFor="to">Email получателя:</label>
+        <input
+          id="to"
+          className="aam_dashboard__input"
+          name="to"
+          type="email"
+          value={form.to}
+          onChange={handleChange}
+          required
+        />
+
+        <label className="aam_dashboard__label" htmlFor="subject">Тема:</label>
+        <input
+          id="subject"
+          className="aam_dashboard__input"
+          name="subject"
+          type="text"
+          value={form.subject}
+          onChange={handleChange}
+        />
+
+        <label className="aam_dashboard__label" htmlFor="text">Текст (plain):</label>
+        <textarea
+          id="text"
+          className="aam_dashboard__textarea"
+          name="text"
+          value={form.text}
+          onChange={handleChange}
+        />
+
+        <label className="aam_dashboard__label" htmlFor="html">HTML:</label>
+        <textarea
+          id="html"
+          className="aam_dashboard__textarea"
+          name="html"
+          value={form.html}
+          onChange={handleChange}
+        />
+
+        <button
+          className="aam_dashboard__button"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? 'Отправка...' : 'Отправить'}
+        </button>
+
+        {status && (
+          <div
+            className={
+              status.success
+                ? 'aam_dashboard__status aam_dashboard__status--success'
+                : 'aam_dashboard__status aam_dashboard__status--error'
+            }
+          >
+            {status.message}
+          </div>
+        )}
+      </form>
+    </div>
+  );
 };
 
 export default Dashboard;

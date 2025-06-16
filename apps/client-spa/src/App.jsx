@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './components/Login';
-import Dashboard from './components/Dashboard'; // подключаем
+import Dashboard from './components/Dashboard';
+
+const PrivateRoute = ({ children }) => {
+  const token = localStorage.getItem('client_token');
+  return token ? children : <Navigate to="/" replace />;
+};
 
 const App = () => {
   const [user, setUser] = useState(() => {
@@ -9,9 +14,16 @@ const App = () => {
     return stored ? JSON.parse(stored) : null;
   });
 
-  // Простая защита маршрутов
-  const PrivateRoute = ({ children }) => {
-    return user ? children : <Navigate to="/" replace />;
+  // Авто-логин при наличии токена
+  useEffect(() => {
+    const token = localStorage.getItem('client_token');
+    if (!token) setUser(null);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('client_token');
+    localStorage.removeItem('user');
+    setUser(null);
   };
 
   return (
@@ -20,7 +32,7 @@ const App = () => {
         <Route
           path="/"
           element={
-            user ? (
+            localStorage.getItem('client_token') ? (
               <Navigate to="/dashboard" replace />
             ) : (
               <Login
@@ -36,7 +48,7 @@ const App = () => {
           path="/dashboard"
           element={
             <PrivateRoute>
-              <Dashboard user={user} />
+              <Dashboard user={user} onLogout={handleLogout} />
             </PrivateRoute>
           }
         />
