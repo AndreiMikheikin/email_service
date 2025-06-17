@@ -19,7 +19,7 @@ const clientAuthController = {
 
       const token = jwt.sign(
         {
-          user_id: user.id,
+          id: user.id,
           admin_id: user.admin_id,
           email: user.email,
           role: 'client'
