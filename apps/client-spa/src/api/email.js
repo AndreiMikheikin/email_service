@@ -30,9 +30,11 @@ export const handleError = (error) => {
 
 export const sendEmail = async (data) => {
   try {
+    console.log(data);
     const response = await apiClient.post('/api/client/send-email', data);
     return response.data;
   } catch (error) {
+    console.error(error);
     handleError(error);
   }
 };
