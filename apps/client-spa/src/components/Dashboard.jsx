@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { sendEmail } from '../api/email';
 import '../styles/components/_dashboard.scss';
 
-const Dashboard = ({ user }) => {
-  const navigate = useNavigate();
+const Dashboard = ({ user, onLogout }) => {
 
   const [form, setForm] = useState({
     from: user?.email || '',
@@ -57,10 +56,12 @@ const Dashboard = ({ user }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('client_token');
-    localStorage.removeItem('user');
-    navigate('/');
+    onLogout(); // Используем колбэк из App, который обновит стейт и вызовет Navigate
   };
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <div className="aam_dashboard">
@@ -80,7 +81,7 @@ const Dashboard = ({ user }) => {
           className="aam_dashboard__input"
           name="from"
           type="email"
-          value={form.from}
+          value={user?.email || ''}
           disabled
         />
 
