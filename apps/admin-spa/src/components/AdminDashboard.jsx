@@ -90,7 +90,11 @@ const AdminDashboard = () => {
             onEditClick={handleOpenEditModal}
             reloadFlag={reloadFlag}
           />
-          <EmailTemplatesBox />
+          <EmailTemplatesBox
+            onAddClick={handleOpenAddTemplateModal}
+            onEditClick={handleOpenEditTemplateModal}
+            reloadFlag={reloadFlag}
+          />
         </div>
       </main>
 
@@ -121,7 +125,7 @@ const AdminDashboard = () => {
           }}
         />
       )}
-      
+
       {/* Шаблоны */}
       {isAddTemplateModalOpen && (
         <AddTemplateModal
