@@ -1,0 +1,84 @@
+@use '../variables' as *;
+
+.aam_box {
+  background-color: $primary-light;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  padding: $spacing-lg;
+  font-family: $font-main;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: $transition;
+
+  &__title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: $text-color;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+  }
+
+  &__list-item {
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    transition: background-color $transition;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: $secondary-light;
+    }
+
+    &--selected {
+      background-color: $hover-dark;
+      color: white;
+      font-weight: bold;
+    }
+  }
+
+  &__list-empty {
+    color: $warning-dark;
+    background-color: $warning-light;
+    padding: $spacing-sm;
+    border-radius: $border-radius;
+    text-align: center;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-sm;
+    justify-content: flex-end;
+  }
+
+  &__button {
+    background-color: $primary-dark;
+    color: white;
+    border: none;
+    border-radius: $border-radius;
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    transition: background-color $transition;
+
+    &:hover:not(:disabled) {
+      background-color: $hover-dark;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

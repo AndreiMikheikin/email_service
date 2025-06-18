@@ -1,72 +1,85 @@
-@use '../variables' as *;
 @use 'sass:color';
+@use '../variables' as *;
 
 .aam_dashboard_header {
-  padding: $spacing-lg;
-  background-color: $primary-light;
-  border-bottom: 1px solid $border-color;
+  background-color: $primary-dark;
+  color: $primary-light;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 2px solid $hover-dark;
 
-  .aam_dashboard_header-content {
-    max-width: 1200px;
-    margin: 0 auto;
+  &-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+  }
+}
 
-    .aam_dashboard_title {
-      font-size: 1.75rem;
-      color: $text-color;
-      margin-bottom: $spacing-sm;
-    }
+.aam_dashboard_title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
 
-    .aam_dashboard_user-info {
-      p {
-        margin: 0 0 $spacing-xs 0;
-        color: $text-color;
-        font-size: 0.95rem;
-      }
-    }
+.aam_dashboard_user-info {
+  font-size: 0.9rem;
+  color: $primary-light;
+
+  p {
+    margin: 0;
   }
 }
 
 .aam_dashboard_main {
   padding: $spacing-lg;
-  background-color: #fff;
+  background-color: color.adjust($primary-light, $lightness: 10%);
+  min-height: 70vh;
+}
 
-  .aam_dashboard_preview-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: $spacing-lg;
-    margin-bottom: $spacing-lg;
-  }
-
-  .aam_dashboard_preview-single {
-    max-width: 640px;
-    margin: 0 auto;
-  }
+.aam_dashboard_preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: $spacing-lg;
+  align-items: start;
 }
 
 .aam_dashboard_footer {
-  padding: $spacing-lg;
-  background-color: $primary-light;
-  border-top: 1px solid $border-color;
+  background-color: $primary-dark;
+  color: $primary-light;
+  padding: $spacing-md $spacing-lg;
+  margin-top: $spacing-lg;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
+  gap: $spacing-sm;
 
-  .aam_dashboard_footer-link,
-  .aam_dashboard_footer-contact {
-    color: $text-color;
-    text-decoration: none;
-    margin-right: $spacing-sm;
+  &-link {
+    color: $primary-light;
+    text-decoration: underline;
 
     &:hover {
-      color: $hover-dark;
-      text-decoration: underline;
-      transition: $transition;
+      color: $warning-light;
     }
   }
 
-  .aam_dashboard_footer-copy {
-    color: color.adjust($text-color, $lightness: -20%);
-    margin-top: $spacing-sm;
+  &-copy {
+    font-size: 0.85rem;
+  }
+
+  &-contacts {
+    display: flex;
+    gap: $spacing-sm;
+
+    &-contact {
+      color: $primary-light;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+        color: $secondary-light;
+      }
+    }
   }
 }

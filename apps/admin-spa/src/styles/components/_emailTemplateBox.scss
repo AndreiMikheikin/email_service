@@ -1,0 +1,82 @@
+@use 'sass:color';
+@use '../variables' as *;
+
+.aam_box {
+  background-color: $primary-light;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  padding: $spacing-md;
+  font-family: $font-main;
+  transition: $transition;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+
+  &__title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: $text-color;
+    margin-bottom: $spacing-sm;
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 300px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+  }
+
+  &__list-item {
+    padding: $spacing-sm $spacing-md;
+    cursor: pointer;
+    transition: background-color $transition;
+
+    &:hover {
+      background-color: $secondary-light;
+    }
+
+    &--selected {
+      background-color: $hover-dark;
+      color: white;
+      font-weight: bold;
+    }
+  }
+
+  &__list-empty {
+    font-style: italic;
+    color: $secondary-light;
+    padding: $spacing-sm;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: $spacing-sm;
+    margin-top: $spacing-sm;
+  }
+
+  &__button {
+    background-color: $primary-dark;
+    color: $primary-light;
+    border: none;
+    border-radius: $border-radius;
+    padding: $spacing-sm $spacing-md;
+    font-family: $font-main;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color $transition;
+
+    &:hover:not(:disabled) {
+      background-color: $hover-dark;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}

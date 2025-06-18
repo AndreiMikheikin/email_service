@@ -1,16 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAdminDashboard } from '../api/auth';
+import '../styles/components/_adminDashboard.scss';
+
+// Создание и редактирование пользователей
 import ClientUsersBox from './ClientUsersBox';
 import AddClientUserModal from './AddClientUserModal';
 import EditClientUserModal from './EditClientUserModal';
+
+// Создание и редактирование шаблонов
+import EmailTemplatesBox from './EmailTemplatesBox';
+import AddTemplateModal from './AddTemplateModal';
+import EditTemplateModal from './EditTemplateModal';
 
 const AdminDashboard = () => {
   const [message, setMessage] = useState('');
   const [user, setUser] = useState(null);
 
+  // Пользователи
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // Шаблоны
+  const [isAddTemplateModalOpen, setIsAddTemplateModalOpen] = useState(false);
+  const [isEditTemplateModalOpen, setIsEditTemplateModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   const [reloadFlag, setReloadFlag] = useState(false); // для обновления списка
   const triggerReload = () => setReloadFlag(prev => !prev);
@@ -29,6 +43,7 @@ const AdminDashboard = () => {
     loadDashboard();
   }, []);
 
+  // Пользователи — обработчики
   const handleOpenAddModal = () => setIsAddModalOpen(true);
   const handleCloseAddModal = () => setIsAddModalOpen(false);
 
@@ -39,6 +54,19 @@ const AdminDashboard = () => {
   const handleCloseEditModal = () => {
     setSelectedUser(null);
     setIsEditModalOpen(false);
+  };
+
+  // Шаблоны — обработчики
+  const handleOpenAddTemplateModal = () => setIsAddTemplateModalOpen(true);
+  const handleCloseAddTemplateModal = () => setIsAddTemplateModalOpen(false);
+
+  const handleOpenEditTemplateModal = (template) => {
+    setSelectedTemplate(template);
+    setIsEditTemplateModalOpen(true);
+  };
+  const handleCloseEditTemplateModal = () => {
+    setSelectedTemplate(null);
+    setIsEditTemplateModalOpen(false);
   };
 
   return (
@@ -62,9 +90,11 @@ const AdminDashboard = () => {
             onEditClick={handleOpenEditModal}
             reloadFlag={reloadFlag}
           />
+          <EmailTemplatesBox />
         </div>
       </main>
 
+      {/* Пользователи */}
       {isAddModalOpen && (
         <AddClientUserModal
           isOpen={isAddModalOpen}
@@ -88,6 +118,34 @@ const AdminDashboard = () => {
           onUserDeleted={() => {
             triggerReload();
             handleCloseEditModal();
+          }}
+        />
+      )}
+      
+      {/* Шаблоны */}
+      {isAddTemplateModalOpen && (
+        <AddTemplateModal
+          isOpen={isAddTemplateModalOpen}
+          onClose={handleCloseAddTemplateModal}
+          onTemplateAdded={() => {
+            triggerReload();
+            handleCloseAddTemplateModal();
+          }}
+        />
+      )}
+
+      {isEditTemplateModalOpen && selectedTemplate && (
+        <EditTemplateModal
+          isOpen={isEditTemplateModalOpen}
+          onClose={handleCloseEditTemplateModal}
+          template={selectedTemplate}
+          onTemplateUpdated={() => {
+            triggerReload();
+            handleCloseEditTemplateModal();
+          }}
+          onTemplateDeleted={() => {
+            triggerReload();
+            handleCloseEditTemplateModal();
           }}
         />
       )}

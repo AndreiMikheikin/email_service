@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getPoolUsers } from '../api/clientUsers';
+import '../styles/components/_clientUserBox.scss';
 
 const ClientUsersBox = ({ onAddClick, onEditClick, reloadFlag }) => {
   const [users, setUsers] = useState([]);
