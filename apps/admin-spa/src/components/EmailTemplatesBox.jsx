@@ -51,7 +51,11 @@ const EmailTemplatesBox = ({ onAddClick, onEditClick, reloadFlag }) => {
       )}
 
       <div className="aam_box__actions">
-        <button className="aam_box__button" onClick={onAddClick}>
+        <button className="aam_box__button"
+          onClick={() => {
+            console.log('Clicked Add Template button');
+            onAddClick();
+          }}>
           Добавить шаблон
         </button>
         <button
@@ -62,7 +66,7 @@ const EmailTemplatesBox = ({ onAddClick, onEditClick, reloadFlag }) => {
           Редактировать шаблон
         </button>
       </div>
-    </section>
+    </section >
   );
 };
 
