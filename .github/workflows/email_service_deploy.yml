@@ -115,7 +115,7 @@ jobs:
         timeout: 2m
 
     # --- Установка зависимостей и перезапуск сервисов ---
-    - name: Install dependencies and restart services
+    - name: Install dependencies, copy builds and restart services
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: 178.250.247.67
@@ -142,7 +142,14 @@ jobs:
           npm ci --production
           [ -f .env.backup ] && mv .env.backup .env
           
-          # Перезапуск
+          # Копируем билды в nginx директории
+          rm -rf /var/www/email-service/admin-spa/*
+          cp -r /root/email-service/apps/admin-spa/dist/* /var/www/email-service/admin-spa/
+          
+          rm -rf /var/www/email-service/client-spa/*
+          cp -r /root/email-service/apps/client-spa/dist/* /var/www/email-service/client-spa/
+          
+          # Перезапуск сервисов
           cd /root/email-service
           pm2 reload ecosystem.config.cjs
           pm2 save

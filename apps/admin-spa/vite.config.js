@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    base: '/admin-spa/',
     plugins: [react()],
     server: {
       port: 3344,

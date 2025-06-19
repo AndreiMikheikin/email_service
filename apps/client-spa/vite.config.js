@@ -5,6 +5,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
+    base: '/client-spa/',
     plugins: [react()],
     server: {
       port: 3345, // <- твой кастомный порт
