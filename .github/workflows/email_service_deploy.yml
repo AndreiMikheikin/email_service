@@ -148,6 +148,9 @@ jobs:
           
           rm -rf /var/www/email-service/client-spa/*
           cp -r /root/email-service/apps/client-spa/dist/* /var/www/email-service/client-spa/
+
+          # Сжатие .gz файлов
+          node ./src/jobs/compress-static.js /var/www/email-service/admin-spa /var/www/email-service/client-spa
           
           # Перезапуск сервисов
           cd /root/email-service
