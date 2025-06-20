@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
+import compression from 'compression';
 
 // Загружаем .env
 dotenv.config();
@@ -13,6 +14,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3344;
+
+app.use(compression());
 
 // Прокси для API
 app.use('/api', createProxyMiddleware({
