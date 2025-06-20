@@ -1,5 +1,4 @@
 import fs from 'fs/promises';
-import fss from 'fs';
 import path from 'path';
 import zlib from 'zlib';
 import readline from 'readline';
