@@ -148,11 +148,11 @@ jobs:
           
           rm -rf /var/www/email-service/client-spa/*
           cp -r /root/email-service/apps/client-spa/dist/* /var/www/email-service/client-spa/
-
-          # Сжатие .gz файлов
-          node /root/email-service/src/jobs/compress-static.js 4 --yes
           
           # Перезапуск сервисов
           cd /root/email-service
           pm2 reload ecosystem.config.cjs
           pm2 save
+
+          # Сжатие .gz файлов
+          node /root/email-service/src/jobs/compress-static.js 4 --yes

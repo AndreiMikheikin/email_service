@@ -131,9 +131,13 @@ async function compressDir(dirPath, maxFiles) {
     return;
   }
 
-  const answer = await askConfirmation(`Сжать ${toCompress.length} файлов из ${dirPath}? (y/n): `);
-  if (answer !== 'y') return;
-
+  if (!autoConfirm) {
+    const answer = await askConfirmation(`Сжать ${toCompress.length} файлов из ${dirPath}? (y/n): `);
+    if (answer !== 'y') return;
+  } else {
+    await logToFile(`✅ Подтверждение сжатия пропущено (режим autoConfirm)`);
+  }
+  
   timer.start = Date.now();
   const results = await runParallelCompression(toCompress, maxFiles);
   timer.end = Date.now();
@@ -176,4 +180,4 @@ const autoConfirm = process.argv.includes('--yes') || process.argv.includes('--a
       await logToFile(`✘ Ошибка при сжатии директории ${dir}: ${err.message}`);
     }
   }
-})(); 
+})();
