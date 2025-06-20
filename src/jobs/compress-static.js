@@ -9,13 +9,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const timer = { start: 0, end: 0, get duration() { return (this.end - this.start) / 1000; } };
+const LOG_DIR = path.resolve(__dirname, '../../logs');
 const LOG_FILE = path.resolve(__dirname, '../../logs/compress.log');
+
+async function ensureLogDirExists() {
+  try {
+    await fs.mkdir(LOG_DIR, { recursive: true });
+  } catch (err) {
+    console.error('Не удалось создать директорию логов:', err.message);
+  }
+}
 
 async function logToFile(message) {
   const timestamp = new Date().toISOString();
-  await fs.appendFile(LOG_FILE, `[${timestamp}] ${message}\n`).catch(err => {
+  try {
+    await ensureLogDirExists();
+    await fs.appendFile(LOG_FILE, `[${timestamp}] ${message}\n`);
+  } catch (err) {
     console.error('Ошибка записи лога:', err.message);
-  });
+  }
 }
 
 async function getAllFiles(dir) {
