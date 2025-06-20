@@ -161,8 +161,8 @@ async function compressDir(dirPath, maxFiles) {
 }
 
 const inputDirs = [
-  path.resolve(__dirname, '../../admin-spa/dist'),
-  path.resolve(__dirname, '../../client-spa/dist')
+  '/var/www/email-service/admin-spa',
+  '/var/www/email-service/client-spa'
 ];
 
 const maxFilesArg = parseInt(process.argv[2], 10) || 4;
