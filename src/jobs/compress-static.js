@@ -166,11 +166,12 @@ const inputDirs = [
 ];
 
 const maxFilesArg = parseInt(process.argv[2], 10) || 4;
+const autoConfirm = process.argv.includes('--yes') || process.argv.includes('--auto');
 
 (async () => {
   for (const dir of inputDirs) {
     try {
-      await compressDir(dir, maxFilesArg);
+      await compressDir(dir, maxFilesArg, autoConfirm);
     } catch (err) {
       await logToFile(`✘ Ошибка при сжатии директории ${dir}: ${err.message}`);
     }
