@@ -11,8 +11,7 @@ const app = express();
 
 app.use(cors({
   origin: [
-    'http://178.250.247.67/admin-spa', // admin-spa
-    'http://178.250.247.67/client-spa',  // client-spa
+    'http://178.250.247.67',
     'http://178.250.247.67:3344', // admin-spa
     'http://178.250.247.67:3345'  // client-spa
   ],
