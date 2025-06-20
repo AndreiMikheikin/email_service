@@ -38,6 +38,28 @@ app.use(express.static(path.join(__dirname, 'dist'), {
   }
 }));
 
+const baseUrl = 'http://178.250.247.67';
+const urls = [
+  '/',
+  '/client-spa/',
+  '/admin-spa/',
+  // сюда потом динамические страницы можно добавить
+];
+
+app.get('/sitemap.xml', (req, res) => {
+  res.header('Content-Type', 'application/xml');
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  ${urls.map(url => `
+  <url>
+    <loc>${baseUrl}${url}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`).join('')}
+</urlset>`;
+  res.send(sitemap);
+});
+
 // Обработка всех остальных запросов — отдаём index.html (для SPA маршрутизации)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
