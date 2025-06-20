@@ -8,7 +8,7 @@ import ResetPassword from './components/ResetPassword';
 import AdminDashboard from './components/AdminDashboard';
 
 const App = () => (
-  <Router>
+  <Router basename="/admin-spa">
     <Routes>
       <Route path ="/" element={<Login />} />
       <Route path="/register" element={<Register />} />
