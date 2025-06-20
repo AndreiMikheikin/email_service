@@ -27,7 +27,7 @@ const App = () => {
   };
 
   return (
-    <Router>
+    <Router basename="/client-spa">
       <Routes>
         <Route
           path="/"
