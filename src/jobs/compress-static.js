@@ -176,4 +176,4 @@ const autoConfirm = process.argv.includes('--yes') || process.argv.includes('--a
       await logToFile(`✘ Ошибка при сжатии директории ${dir}: ${err.message}`);
     }
   }
-})();
+})(); 
