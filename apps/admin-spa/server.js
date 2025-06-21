@@ -1,4 +1,5 @@
 import express from 'express';
+import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -37,6 +38,30 @@ app.use(express.static(path.join(__dirname, 'dist'), {
     }
   }
 }));
+
+// SSR рендер
+app.get('/admin-spa/*', async (req, res) => {
+  try {
+    // Загрузить index.html как шаблон
+    const templatePath = path.join(__dirname, 'dist', 'index.html');
+    let template = await fs.readFile(templatePath, 'utf-8');
+
+    // Импортировать серверный бандл динамически
+    const { render } = await import(path.join(__dirname, 'dist', 'server', 'entry-server.js'));
+
+    // Рендер React в строку
+    const appHtml = render(req.originalUrl);
+
+    // Вставить рендер в шаблон
+    const html = template.replace(`<!--ssr-outlet-->`, appHtml);
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (e) {
+    console.error('SSR error:', e);
+    res.status(500).send('Ошибка сервера');
+  }
+});
 
 const baseUrl = 'http://178.250.247.67';
 const urls = [
