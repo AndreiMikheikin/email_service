@@ -1,140 +1,245 @@
-name: Deploy Email Service with SSR
+name: Deploy Production Stack with SSR
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
     paths:
-      - 'src/**'
-      - 'sql/**'
       - 'apps/admin-spa/**'
       - 'apps/client-spa/**'
-      - 'package.json'
-      - 'package-lock.json'
+      - 'src/**'
       - '.github/workflows/deploy.yml'
+
+env:
+  NODE_ENV: production
+  SSH_HOST: 178.250.247.67
+  DEPLOY_DIR: /root/email-service
+  WEB_ROOT: /var/www/email-service
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
-    - name: Checkout repository
+    # ----------------------------
+    # 1. ПОДГОТОВКА РЕПОЗИТОРИЯ
+    # ----------------------------
+    - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        persist-credentials: false
 
-    - name: Setup Node.js 20.x
+    # ----------------------------
+    # 2. НАСТРОЙКА СРЕДЫ
+    # ----------------------------
+    - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20.x'
         cache: 'npm'
+        cache-dependency-path: |
+          apps/admin-spa/package-lock.json
+          apps/client-spa/package-lock.json
 
+    - name: Verify environment
+      run: |
+        node -v
+        npm -v
+        ls -la apps/admin-spa/
+
+    # ----------------------------
+    # 3. УСТАНОВКА ЗАВИСИМОСТЕЙ
+    # ----------------------------
     - name: Install root dependencies
+      run: npm ci --ignore-scripts
+
+    - name: Install admin-spa (SSR) dependencies
+      working-directory: apps/admin-spa
+      run: |
+        npm ci
+        # SSR-specific dependencies
+        npm install react-dom-server@18.2.0
+
+    - name: Install client-spa dependencies
+      working-directory: apps/client-spa
       run: npm ci
 
-    - name: Install and Build admin-spa (SSR)
-      working-directory: ./apps/admin-spa
+    # ----------------------------
+    # 4. СБОРКА ПРОЕКТОВ
+    # ----------------------------
+    - name: Build admin-spa (SSR)
+      working-directory: apps/admin-spa
       run: |
-        npm ci
         npm run build:client
         npm run build:server
+        
+        # Verify critical SSR files
+        [ -f dist/client/index.html ] || { echo "Missing client index.html"; exit 1; }
+        [ -f dist/server/entry-server.js ] || { echo "Missing server entry"; exit 1; }
+        ls -la dist/server/
 
-    - name: Install and Build client-spa (SPA)
-      working-directory: ./apps/client-spa
+    - name: Build client-spa (SPA)
+      working-directory: apps/client-spa
       run: |
-        npm ci
         npm run build
+        [ -f dist/index.html ] || exit 1
 
-    - name: Prepare deployment artifacts
+    # ----------------------------
+    # 5. ПОДГОТОВКА АРТЕФАКТОВ
+    # ----------------------------
+    - name: Package deployment artifacts
       run: |
-        mkdir -p deployment
-        cp -r src sql package.json package-lock.json deployment/
-        mkdir -p deployment/apps/admin-spa
-        cp apps/admin-spa/server.js deployment/apps/admin-spa/
-        cp apps/admin-spa/package.json deployment/apps/admin-spa/
-        cp apps/admin-spa/package-lock.json deployment/apps/admin-spa/
-        cp -r apps/admin-spa/dist deployment/apps/admin-spa/
-        mkdir -p deployment/apps/client-spa
-        cp -r apps/client-spa/dist deployment/apps/client-spa/
+        mkdir -p artifact/{core,admin-spa,client-spa}
+        
+        # Core service
+        cp -r src sql package*.json ecosystem.config.cjs artifact/core/
+        
+        # Admin SPA (SSR)
+        cp apps/admin-spa/{server.js,package*.json,.env*} artifact/admin-spa/ 2>/dev/null || true
+        cp -r apps/admin-spa/dist artifact/admin-spa/
+        
+        # Client SPA
+        cp -r apps/client-spa/dist artifact/client-spa/
+        cp apps/client-spa/{package*.json,.env*} artifact/client-spa/ 2>/dev/null || true
+        
+        # Verify artifact structure
+        tree artifact -L 3
 
-    - name: Validate SSH Key
+    # ----------------------------
+    # 6. НАСТРОЙКА SSH
+    # ----------------------------
+    - name: Configure SSH
       run: |
-        echo "$SSH_PRIVATE_KEY" > key.pem
-        chmod 600 key.pem
-        ssh-keygen -lf key.pem
-        rm key.pem
+        mkdir -p ~/.ssh
+        echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
+        
+        # Test connection
+        ssh root@$SSH_HOST "echo 'SSH connection successful'"
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy email-service core
-      uses: appleboy/scp-action@v0.1.5
-      with:
-        host: 178.250.247.67
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        source: "deployment/*"
-        target: "/root/email-service/"
-        overwrite: true
-        strip_components: 2
+    # ----------------------------
+    # 7. ДЕПЛОЙ НА СЕРВЕР
+    # ----------------------------
+    - name: Deploy core service
+      run: |
+        rsync -avz --delete artifact/core/ root@$SSH_HOST:$DEPLOY_DIR/
+        ssh root@$SSH_HOST "
+          cd $DEPLOY_DIR
+          npm ci --production --ignore-scripts
+        "
 
-    - name: Deploy admin-spa SSR
-      uses: appleboy/scp-action@v0.1.5
-      with:
-        host: 178.250.247.67
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        source: "deployment/apps/admin-spa/*"
-        target: "/root/email-service/apps/admin-spa/"
-        overwrite: true
-        strip_components: 2
+    - name: Deploy admin-spa (SSR)
+      run: |
+        rsync -avz --delete artifact/admin-spa/ root@$SSH_HOST:$DEPLOY_DIR/apps/admin-spa/
+        ssh root@$SSH_HOST "
+          cd $DEPLOY_DIR/apps/admin-spa
+          npm ci --production
+          [ -f .env.production ] && cp .env.production .env || true
+        "
 
     - name: Deploy client-spa
-      uses: appleboy/scp-action@v0.1.5
-      with:
-        host: 178.250.247.67
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        source: "deployment/apps/client-spa/*"
-        target: "/root/email-service/apps/client-spa/"
-        overwrite: true
-        strip_components: 2
-
-    - name: Configure production server and restart services
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: 178.250.247.67
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          cd /root/email-service
+      run: |
+        rsync -avz --delete artifact/client-spa/ root@$SSH_HOST:$DEPLOY_DIR/apps/client-spa/
+        ssh root@$SSH_HOST "
+          cd $DEPLOY_DIR/apps/client-spa
           npm ci --production
+          [ -f .env.production ] && cp .env.production .env || true
+        "
 
-          cd apps/admin-spa
-          if [ -f .env ]; then cp .env .env.backup; fi
-          npm ci --production
-          if [ -f .env.backup ]; then mv .env.backup .env; fi
-
-          cd ../client-spa
-          if [ -f .env ]; then cp .env .env.backup; fi
-          npm ci --production
-          if [ -f .env.backup ]; then mv .env.backup .env; fi
-
-          mkdir -p /var/www/email-service/admin-spa
-          mkdir -p /var/www/email-service/client-spa
-
-          # Копируем только клиентскую часть SSR admin-spa в nginx директорию
-          rsync -a --delete /root/email-service/apps/admin-spa/dist/client/ /var/www/email-service/admin-spa/
-          rsync -a --delete /root/email-service/apps/client-spa/dist/ /var/www/email-service/client-spa/
-
-          chown -R www-data:www-data /var/www/email-service
-          find /var/www/email-service -type d -exec chmod 755 {} \;
-          find /var/www/email-service -type f -exec chmod 644 {} \;
-
-          pm2 restart all
+    # ----------------------------
+    # 8. НАСТРОЙКА ПРОДКШЕНА
+    # ----------------------------
+    - name: Configure production environment
+      run: |
+        ssh root@$SSH_HOST "
+          # Setup web directories
+          mkdir -p $WEB_ROOT/{admin-spa,client-spa}
+          
+          # Copy SSR client assets
+          rsync -a --delete $DEPLOY_DIR/apps/admin-spa/dist/client/ $WEB_ROOT/admin-spa/
+          
+          # Copy SPA assets
+          rsync -a --delete $DEPLOY_DIR/apps/client-spa/dist/ $WEB_ROOT/client-spa/
+          
+          # Permissions
+          chown -R www-data:www-data $WEB_ROOT
+          find $WEB_ROOT -type d -exec chmod 755 {} \;
+          find $WEB_ROOT -type f -exec chmod 644 {} \;
+          
+          # PM2 Process Management
+          pm2 delete admin-spa-ssr || true
+          cd $DEPLOY_DIR/apps/admin-spa
+          pm2 start server.js --name admin-spa-ssr --time
+          pm2 save
+          
+          # Restart services
           systemctl restart nginx
+          
+          # Verify
+          pm2 list
+          systemctl status nginx
+          curl -I http://localhost:3344/admin-spa/health
+        "
 
-          node /root/email-service/src/jobs/compress-static.js 4 --yes
+        # ----------------------------
+    # 9. НАСТРОЙКА ПРОДКШЕНА И СЖАТИЕ
+    # ----------------------------
+    - name: Configure production and compress
+      run: |
+        ssh root@$SSH_HOST "
+          # Настройка web-директорий
+          mkdir -p $WEB_ROOT/{admin-spa,client-spa}
+          
+          # Копирование ассетов
+          rsync -a --delete $DEPLOY_DIR/apps/admin-spa/dist/client/ $WEB_ROOT/admin-spa/
+          rsync -a --delete $DEPLOY_DIR/apps/client-spa/dist/ $WEB_ROOT/client-spa/
+          
+          # Права доступа
+          chown -R www-data:www-data $WEB_ROOT
+          find $WEB_ROOT -type d -exec chmod 755 {} \;
+          find $WEB_ROOT -type f -exec chmod 644 {} \;
+          
+          # Запуск вашего скрипта сжатия с параметрами
+          echo 'Запуск кастомного сжатия статики...'
+          node $DEPLOY_DIR/src/jobs/compress-static.js 4 --yes
+          echo 'Сжатие завершено. Результат:'
+          ls -la $WEB_ROOT/admin-spa/assets/*.gz | head -5
+          
+          # Управление процессами
+          pm2 delete admin-spa-ssr || true
+          cd $DEPLOY_DIR/apps/admin-spa
+          pm2 start server.js --name admin-spa-ssr --time
+          pm2 save
+          
+          # Перезапуск сервисов
+          systemctl restart nginx
+        "
+
+    # ----------------------------
+    # 10. ПРОВЕРКА РЕЗУЛЬТАТОВ
+    # ----------------------------
+    - name: Verify deployment
+      run: |
+        ssh root@$SSH_HOST "
+          # Проверка сжатых файлов
+          echo 'Проверка сжатых ассетов:'
+          find $WEB_ROOT -name '*.gz' | wc -l
+          
+          # Проверка SSR
+          echo 'Проверка здоровья SSR:'
+          curl -s http://localhost:3344/admin-spa/health | jq .
+          
+          # Проверка статики
+          echo 'Проверка статических файлов:'
+          curl -I http://localhost/admin-spa/assets/index-*.js | grep -E 'HTTP|Content-Encoding'
+          
+          # Логи процессов
+          echo 'Последние логи PM2:'
+          pm2 logs admin-spa-ssr --lines 10 | grep -v 'DEBUG'
+          echo 'Последние ошибки Nginx:'
+          journalctl -u nginx --since '2 minutes ago' | grep -i error || echo 'Ошибок нет'
+        "
