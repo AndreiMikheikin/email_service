@@ -30,7 +30,7 @@ export default defineConfig(({ mode, ssrBuild }) => {
       ? {
           ssr: 'src/entry-server.jsx',
           outDir: 'dist/server',
-          emptyOutDir: false, // важно не чистить index.html
+          emptyOutDir: true,
           rollupOptions: {
             input: 'src/entry-server.jsx',
             external: ['react', 'react-dom'],
@@ -41,7 +41,7 @@ export default defineConfig(({ mode, ssrBuild }) => {
           outDir: 'dist',
           emptyOutDir: true, // чистим перед клиентской сборкой
           rollupOptions: {
-            input: 'index.html', // или 'src/index.html' — если он у тебя там
+            input: 'index.html',
           },
         },
 
