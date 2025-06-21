@@ -126,6 +126,7 @@ jobs:
           mkdir -p /var/www/email-service/admin-spa
           mkdir -p /var/www/email-service/client-spa
 
+          # копируем в nginx директории только dist/client из admin-spa
           rsync -a --delete /root/email-service/apps/admin-spa/dist/client/ /var/www/email-service/admin-spa/
           rsync -a --delete /root/email-service/apps/client-spa/dist/ /var/www/email-service/client-spa/
 
