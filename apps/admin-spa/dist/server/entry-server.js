@@ -1,7 +1,8 @@
 import require$$0, { useState, useEffect } from "react";
 import require$$1 from "stream";
 import require$$0$1 from "util";
-import { useNavigate, useLocation, BrowserRouter, Routes, Route } from "react-router-dom";
+import { StaticRouter } from "react-router-dom/server.mjs";
+import { useNavigate, useLocation, Routes, Route } from "react-router-dom";
 import axios from "axios";
 var jsxRuntime = { exports: {} };
 var reactJsxRuntime_production_min = {};
@@ -9681,7 +9682,7 @@ function requireReactDomServerLegacy_node_development() {
         }
         return renderToNodeStreamImpl(children, options);
       }
-      function renderToString2(children, options) {
+      function renderToString(children, options) {
         return renderToStringImpl(children, options, false, 'The server used "renderToString" which does not support Suspense. If you intended for this Suspense boundary to render the fallback content on the server consider throwing an Error somewhere within the Suspense boundary. If you intended to have the server wait for the suspended component please switch to "renderToPipeableStream" which supports Suspense on the server');
       }
       function renderToStaticMarkup(children, options) {
@@ -9690,7 +9691,7 @@ function requireReactDomServerLegacy_node_development() {
       reactDomServerLegacy_node_development.renderToNodeStream = renderToNodeStream;
       reactDomServerLegacy_node_development.renderToStaticMarkup = renderToStaticMarkup;
       reactDomServerLegacy_node_development.renderToStaticNodeStream = renderToStaticNodeStream;
-      reactDomServerLegacy_node_development.renderToString = renderToString2;
+      reactDomServerLegacy_node_development.renderToString = renderToString;
       reactDomServerLegacy_node_development.version = ReactVersion;
     })();
   }
@@ -15062,7 +15063,7 @@ function requireReactDomServer_node_development() {
       function createRequestImpl(children, options) {
         return createRequest(children, createResponseState(options ? options.identifierPrefix : void 0, options ? options.nonce : void 0, options ? options.bootstrapScriptContent : void 0, options ? options.bootstrapScripts : void 0, options ? options.bootstrapModules : void 0), createRootFormatContext(options ? options.namespaceURI : void 0), options ? options.progressiveChunkSize : void 0, options ? options.onError : void 0, options ? options.onAllReady : void 0, options ? options.onShellReady : void 0, options ? options.onShellError : void 0, void 0);
       }
-      function renderToPipeableStream(children, options) {
+      function renderToPipeableStream2(children, options) {
         var request = createRequestImpl(children, options);
         var hasStartedFlowing = false;
         startWork(request);
@@ -15091,7 +15092,7 @@ function requireReactDomServer_node_development() {
           }
         };
       }
-      reactDomServer_node_development.renderToPipeableStream = renderToPipeableStream;
+      reactDomServer_node_development.renderToPipeableStream = renderToPipeableStream2;
       reactDomServer_node_development.version = ReactVersion;
     })();
   }
@@ -15106,11 +15107,11 @@ if (process.env.NODE_ENV === "production") {
   s = requireReactDomServer_node_development();
 }
 l.version;
-var renderToString = l.renderToString;
+l.renderToString;
 l.renderToStaticMarkup;
 l.renderToNodeStream;
 l.renderToStaticNodeStream;
-s.renderToPipeableStream;
+var renderToPipeableStream = s.renderToPipeableStream;
 const API_URL$1 = "http://178.250.247.67:3355";
 const apiClient$1 = axios.create({
   baseURL: API_URL$1,
@@ -15373,12 +15374,12 @@ const EmailConfirm = () => {
     }
     async function confirmEmail() {
       try {
-        const res = await fetch(`${API_URL2}/api/users/confirm-email?token=${token}`);
-        if (res.ok) {
+        const res2 = await fetch(`${API_URL2}/api/users/confirm-email?token=${token}`);
+        if (res2.ok) {
           setStatus("success");
           setCountdown(3);
         } else {
-          const data = await res.json();
+          const data = await res2.json();
           if (data.message === "Token expired") {
             setStatus("expired");
           } else {
@@ -15518,10 +15519,10 @@ const ResetPassword = () => {
   const API_URL2 = "http://178.250.247.67:3355";
   useEffect(() => {
     if (token) {
-      fetch(`${API_URL2}/api/users/reset-token-info?token=${token}`).then((res) => {
-        if (!res.ok)
+      fetch(`${API_URL2}/api/users/reset-token-info?token=${token}`).then((res2) => {
+        if (!res2.ok)
           throw new Error("Токен неактуален или просрочен");
-        return res.json();
+        return res2.json();
       }).then((data) => {
         setEmailFromToken(data.email);
       }).catch(() => {
@@ -16207,7 +16208,7 @@ const AdminDashboard = () => {
     ] })
   ] });
 };
-const App = () => /* @__PURE__ */ jsxRuntimeExports.jsx(BrowserRouter, { basename: "/admin-spa", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
+const AppRoutes = () => /* @__PURE__ */ jsxRuntimeExports.jsx(Suspense, { fallback: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: "Loading..." }), children: /* @__PURE__ */ jsxRuntimeExports.jsxs(Routes, { children: [
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Login, {}) }),
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/register", element: /* @__PURE__ */ jsxRuntimeExports.jsx(Register, {}) }),
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/confirm-email", element: /* @__PURE__ */ jsxRuntimeExports.jsx(EmailConfirm, {}) }),
@@ -16215,9 +16216,21 @@ const App = () => /* @__PURE__ */ jsxRuntimeExports.jsx(BrowserRouter, { basenam
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/reset-password", element: /* @__PURE__ */ jsxRuntimeExports.jsx(ResetPassword, {}) }),
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/adminDashboard", element: /* @__PURE__ */ jsxRuntimeExports.jsx(AdminDashboard, {}) })
 ] }) });
-function render() {
-  const html = renderToString(/* @__PURE__ */ jsxRuntimeExports.jsx(App, {}));
-  return html;
+async function render(url) {
+  let didError = false;
+  const stream = renderToPipeableStream(
+    /* @__PURE__ */ jsxRuntimeExports.jsx(StaticRouter, { location: url, basename: "/admin-spa", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppRoutes, {}) }),
+    {
+      onShellReady() {
+        res.status(didError ? 500 : 200);
+        stream.pipe(res);
+      },
+      onError(error) {
+        didError = true;
+        console.error(error);
+      }
+    }
+  );
 }
 export {
   render

@@ -9,14 +9,16 @@ import ResetPassword from './components/ResetPassword';
 import AdminDashboard from './components/AdminDashboard';
 
 const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Login />} />
-    <Route path="/register" element={<Register />} />
-    <Route path="/confirm-email" element={<EmailConfirm />} />
-    <Route path="/forgot-password" element={<ForgotPassword />} />
-    <Route path="/reset-password" element={<ResetPassword />} />
-    <Route path="/adminDashboard" element={<AdminDashboard />} />
-  </Routes>
+  <Suspense fallback={<div>Loading...</div>}>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/confirm-email" element={<EmailConfirm />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/adminDashboard" element={<AdminDashboard />} />
+    </Routes>
+  </Suspense>
 );
 
 export default AppRoutes;

@@ -33,17 +33,24 @@ export default defineConfig(({ mode, ssrBuild }) => {
         emptyOutDir: true,  // очищаем только dist/server
         rollupOptions: {
           input: 'src/entry-server.jsx',
+          output: {
+            format: 'esm' // Формат указываем здесь
+          },
           external: ['react', 'react-dom'],
         },
         minify: false,
       }
       : {
-        outDir: 'dist',
-        emptyOutDir: false,  // НЕ очищаем dist, чтобы не удалять dist/server
+        outDir: 'dist/client',
+        manifest: true,
         rollupOptions: {
-          input: 'index.html',
-        },
+          output: {
+            entryFileNames: 'assets/[name]-[hash].js',
+            assetFileNames: 'assets/[name]-[hash][extname]'
+          }
+        }
       },
+
 
     ssr: {
       noExternal: ['react', 'react-dom'],

@@ -29,22 +29,14 @@ app.use('/api', createProxyMiddleware({
 // SSR для admin-spa
 app.get('/admin-spa/*', async (req, res) => {
   try {
-    const templatePath = path.join(__dirname, 'dist', 'index.html');
-    let template = await fs.readFile(templatePath, 'utf-8');
-
-    const { render } = await import(path.join(__dirname, 'dist', 'server', 'entry-server.js'));
-
+    const template = await fs.readFile(path.join(__dirname, 'dist/client/index.html'), 'utf-8');
+    const { render } = await import('./dist/server/entry-server.js');
     const appHtml = await render(req.originalUrl);
-
-    console.log('SSR HTML snippet:', appHtml.slice(0, 200));
-
-    const html = template.replace('<!--ssr-outlet-->', appHtml);
-
-    res.setHeader('Content-Type', 'text/html');
+    const html = template.replace('<!--app-html-->', appHtml);
     res.send(html);
   } catch (e) {
-    console.error('SSR error:', e);
-    res.status(500).send('Ошибка сервера');
+    console.error(e);
+    res.status(500).send('Server Error');
   }
 });
 
