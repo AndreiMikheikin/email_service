@@ -28,22 +28,22 @@ export default defineConfig(({ mode, ssrBuild }) => {
 
     build: ssrBuild
       ? {
-          ssr: 'src/entry-server.jsx',
-          outDir: 'dist/server',
-          emptyOutDir: true,
-          rollupOptions: {
-            input: 'src/entry-server.jsx',
-            external: ['react', 'react-dom'],
-          },
-          minify: false,
-        }
-      : {
-          outDir: 'dist',
-          emptyOutDir: true, // чистим перед клиентской сборкой
-          rollupOptions: {
-            input: 'index.html',
-          },
+        ssr: 'src/entry-server.jsx',
+        outDir: 'dist/server',
+        emptyOutDir: true,  // очищаем только dist/server
+        rollupOptions: {
+          input: 'src/entry-server.jsx',
+          external: ['react', 'react-dom'],
         },
+        minify: false,
+      }
+      : {
+        outDir: 'dist',
+        emptyOutDir: false,  // НЕ очищаем dist, чтобы не удалять dist/server
+        rollupOptions: {
+          input: 'index.html',
+        },
+      },
 
     ssr: {
       noExternal: ['react', 'react-dom'],

@@ -36,6 +36,8 @@ app.get('/admin-spa/*', async (req, res) => {
 
     const appHtml = await render(req.originalUrl);
 
+    console.log('SSR HTML snippet:', appHtml.slice(0, 200));
+
     const html = template.replace('<!--ssr-outlet-->', appHtml);
 
     res.setHeader('Content-Type', 'text/html');

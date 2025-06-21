@@ -1,8 +1,13 @@
+// apps/admin-spa/src/entry-server.jsx
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import App from './app';
+import { StaticRouter } from 'react-router-dom/server';
+import AppRoutes from './app';
 
-export function render() {
-  const html = renderToString(<App />);
-  return html;
+export function render(url) {
+  return renderToString(
+    <StaticRouter location={url} basename="/admin-spa">
+      <AppRoutes />
+    </StaticRouter>
+  );
 }

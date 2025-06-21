@@ -1,5 +1,11 @@
 import React from 'react';
-import { hydrateRoot } from 'react-dom/client';
-import App from './app';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './app';
 
-hydrateRoot(document.getElementById('root'), <App />);
+ReactDOM.hydrateRoot(
+  document.getElementById('root'),
+  <BrowserRouter basename="/admin-spa">
+    <AppRoutes />
+  </BrowserRouter>
+);
