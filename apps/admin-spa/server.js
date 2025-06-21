@@ -34,7 +34,7 @@ app.get('/admin-spa/*', async (req, res) => {
 
     const { render } = await import(path.join(__dirname, 'dist', 'server', 'entry-server.js'));
 
-    const appHtml = await render(req.originalUrl);
+    const appHtml = render(req.originalUrl);
 
     console.log('SSR HTML snippet:', appHtml.slice(0, 200));
 
