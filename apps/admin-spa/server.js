@@ -6,10 +6,8 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 import dotenv from 'dotenv';
 import compression from 'compression';
 
-// Загружаем .env
 dotenv.config();
 
-// Получаем __dirname для ES-модуля
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -18,7 +16,6 @@ const PORT = process.env.PORT || 3344;
 
 app.use(compression());
 
-// Прокси для API
 app.use('/api', createProxyMiddleware({
   target: process.env.API_URL || 'http://178.250.247.67:3355',
   changeOrigin: true,
@@ -29,31 +26,17 @@ app.use('/api', createProxyMiddleware({
   }
 }));
 
-// Отдаём статику из dist
-app.use(express.static(path.join(__dirname, 'dist'), {
-  maxAge: '1y',
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache');
-    }
-  }
-}));
-
-// SSR рендер
+// SSR для admin-spa
 app.get('/admin-spa/*', async (req, res) => {
   try {
-    // Загрузить index.html как шаблон
     const templatePath = path.join(__dirname, 'dist', 'index.html');
     let template = await fs.readFile(templatePath, 'utf-8');
 
-    // Импортировать серверный бандл динамически
     const { render } = await import(path.join(__dirname, 'dist', 'server', 'entry-server.js'));
 
-    // Рендер React в строку
-    const appHtml = render(req.originalUrl);
+    const appHtml = await render(req.originalUrl);
 
-    // Вставить рендер в шаблон
-    const html = template.replace(`<!--ssr-outlet-->`, appHtml);
+    const html = template.replace('<!--ssr-outlet-->', appHtml);
 
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
@@ -63,13 +46,9 @@ app.get('/admin-spa/*', async (req, res) => {
   }
 });
 
+// Sitemap
 const baseUrl = 'http://178.250.247.67';
-const urls = [
-  '/',
-  '/client-spa/',
-  '/admin-spa/',
-  // сюда потом динамические страницы можно добавить
-];
+const urls = ['/', '/client-spa/', '/admin-spa/'];
 
 app.get('/sitemap.xml', (req, res) => {
   res.header('Content-Type', 'application/xml');
@@ -85,20 +64,17 @@ app.get('/sitemap.xml', (req, res) => {
   res.send(sitemap);
 });
 
-// Обработка всех остальных запросов — отдаём index.html (для SPA маршрутизации)
+// fallback для остальных запросов — либо 404, либо тоже SSR, или просто send статус
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.status(404).send('Not Found');
 });
 
-// Обработка ошибок
 app.use((err, req, res, next) => {
   console.error('Express error:', err.stack);
   res.status(500).send('Internal Server Error');
 });
 
-// Запуск сервера
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Admin SPA server listening at http://178.250.247.67:${PORT}`);
-  console.log(`Serving static files from: ${path.join(__dirname, 'dist')}`);
   console.log(`Proxying /api to: ${process.env.API_URL || 'http://178.250.247.67:3355'}`);
 });
