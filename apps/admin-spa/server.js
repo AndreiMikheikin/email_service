@@ -26,6 +26,9 @@ app.use('/api', createProxyMiddleware({
   }
 }));
 
+// статика
+app.use('/admin-spa/assets', express.static(path.join(__dirname, 'dist/client/assets')));
+
 // SSR для admin-spa
 app.get('/admin-spa/*', async (req, res) => {
   try {
