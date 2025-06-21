@@ -1,4 +1,4 @@
-import require$$0, { useState, useEffect } from "react";
+import require$$0, { useState, useEffect, Suspense } from "react";
 import require$$1 from "stream";
 import require$$0$1 from "util";
 import { StaticRouter } from "react-router-dom/server.mjs";
@@ -15374,12 +15374,12 @@ const EmailConfirm = () => {
     }
     async function confirmEmail() {
       try {
-        const res2 = await fetch(`${API_URL2}/api/users/confirm-email?token=${token}`);
-        if (res2.ok) {
+        const res = await fetch(`${API_URL2}/api/users/confirm-email?token=${token}`);
+        if (res.ok) {
           setStatus("success");
           setCountdown(3);
         } else {
-          const data = await res2.json();
+          const data = await res.json();
           if (data.message === "Token expired") {
             setStatus("expired");
           } else {
@@ -15519,10 +15519,10 @@ const ResetPassword = () => {
   const API_URL2 = "http://178.250.247.67:3355";
   useEffect(() => {
     if (token) {
-      fetch(`${API_URL2}/api/users/reset-token-info?token=${token}`).then((res2) => {
-        if (!res2.ok)
+      fetch(`${API_URL2}/api/users/reset-token-info?token=${token}`).then((res) => {
+        if (!res.ok)
           throw new Error("Токен неактуален или просрочен");
-        return res2.json();
+        return res.json();
       }).then((data) => {
         setEmailFromToken(data.email);
       }).catch(() => {
@@ -16216,20 +16216,10 @@ const AppRoutes = () => /* @__PURE__ */ jsxRuntimeExports.jsx(Suspense, { fallba
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/reset-password", element: /* @__PURE__ */ jsxRuntimeExports.jsx(ResetPassword, {}) }),
   /* @__PURE__ */ jsxRuntimeExports.jsx(Route, { path: "/adminDashboard", element: /* @__PURE__ */ jsxRuntimeExports.jsx(AdminDashboard, {}) })
 ] }) });
-async function render(url) {
-  let didError = false;
-  const stream = renderToPipeableStream(
+function render(url, opts) {
+  return renderToPipeableStream(
     /* @__PURE__ */ jsxRuntimeExports.jsx(StaticRouter, { location: url, basename: "/admin-spa", children: /* @__PURE__ */ jsxRuntimeExports.jsx(AppRoutes, {}) }),
-    {
-      onShellReady() {
-        res.status(didError ? 500 : 200);
-        stream.pipe(res);
-      },
-      onError(error) {
-        didError = true;
-        console.error(error);
-      }
-    }
+    opts
   );
 }
 export {
