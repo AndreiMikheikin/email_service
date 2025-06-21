@@ -27,7 +27,7 @@ app.use('/api', createProxyMiddleware({
 }));
 
 // SSR для admin-spa
-app.get('/admin-spa*', async (req, res) => {
+app.get('/admin-spa/*', async (req, res) => {
   try {
     const template = await fs.readFile(
       path.join(__dirname, 'dist/client/index.html'), 
