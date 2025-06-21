@@ -1,6 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import path from 'node:path';
 
 export default defineConfig(({ mode, ssrBuild }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -26,26 +26,27 @@ export default defineConfig(({ mode, ssrBuild }) => {
       },
     },
 
-    // Отдельные настройки для билда SSR и клиентского билда
     build: ssrBuild
       ? {
-          ssr: 'src/entry-server.jsx', // точка входа для SSR
-          outDir: 'dist/server', // выводим серверный бандл сюда
+          ssr: 'src/entry-server.jsx',
+          outDir: 'dist/server',
+          emptyOutDir: false, // важно не чистить index.html
           rollupOptions: {
             input: 'src/entry-server.jsx',
-            external: ['react', 'react-dom'], // можно расширить список
+            external: ['react', 'react-dom'],
           },
-          minify: false, // по желанию
+          minify: false,
         }
       : {
           outDir: 'dist',
+          emptyOutDir: true, // чистим перед клиентской сборкой
           rollupOptions: {
-            input: 'src/entry-client.jsx', // клиентский вход
+            input: 'index.html', // или 'src/index.html' — если он у тебя там
           },
         },
 
     ssr: {
-      noExternal: ['react', 'react-dom'], // чтобы не делать внешними зависимости для SSR
+      noExternal: ['react', 'react-dom'],
     },
 
     resolve: {
