@@ -27,15 +27,19 @@ app.use('/api', createProxyMiddleware({
 }));
 
 // SSR для admin-spa
-app.get('/admin-spa/*', async (req, res) => {
+app.get('/admin-spa*', async (req, res) => {
   try {
-    const template = await fs.readFile(path.join(__dirname, 'dist/client/index.html'), 'utf-8');
+    const template = await fs.readFile(
+      path.join(__dirname, 'dist/client/index.html'), 
+      'utf-8'
+    );
+    
     const { render } = await import('./dist/server/entry-server.js');
-    const appHtml = await render(req.originalUrl);
-    const html = template.replace('<!--app-html-->', appHtml);
-    res.send(html);
-  } catch (e) {
-    console.error(e);
+    const appHtml = await render(req.url);
+    
+    res.send(template.replace('<!--app-html-->', appHtml));
+  } catch (err) {
+    console.error('SSR Error:', err);
     res.status(500).send('Server Error');
   }
 });

@@ -1,4 +1,4 @@
-name: Deploy Email Service, Admin SPA and Client SPA
+name: Deploy Email Service with SSR
 
 on:
   push:
@@ -25,41 +25,35 @@ jobs:
         node-version: 20
         cache: 'npm'
 
-    # --- admin-spa install ---
-    - name: Sync admin-spa dependencies
-      working-directory: ./apps/admin-spa
+    # --- Установка зависимостей ---
+    - name: Install dependencies
       run: |
-        rm -rf node_modules package-lock.json
-        npm install
-        npm install path-to-regexp@6.3.0 --save-exact
+        cd apps/admin-spa && npm ci
+        cd ../client-spa && npm ci
+        npm ci
 
-    # --- admin-spa build ---
-    - name: Build admin-spa
-      working-directory: ./apps/admin-spa
-      run: npm run build
-
-    # --- client-spa install ---
-    - name: Sync client-spa dependencies
-      working-directory: ./apps/client-spa
+    # --- Сборка проектов ---
+    - name: Build projects
       run: |
-        rm -rf node_modules package-lock.json
-        npm install
+        cd apps/admin-spa && npm run build
+        cd ../client-spa && npm run build
 
-    # --- client-spa build ---
-    - name: Build client-spa
-      working-directory: ./apps/client-spa
-      run: npm run build
-
-    # --- Подготовка deployment для email-service ---
-    - name: Prepare email-service deployment
+    # --- Подготовка deployment ---
+    - name: Prepare deployment
       run: |
         mkdir -p deployment
-        cp -r src deployment/
-        cp -r sql deployment/
-        cp package.json deployment/
-        cp package-lock.json deployment/
+        cp -r src sql package*.json ecosystem.config.cjs deployment/
+        
+        # Для admin-spa (SSR)
+        mkdir -p deployment/apps/admin-spa
+        cp apps/admin-spa/{server.js,package*.json} deployment/apps/admin-spa/
+        cp -r apps/admin-spa/dist deployment/apps/admin-spa/
+        
+        # Для client-spa (SPA)
+        mkdir -p deployment/apps/client-spa
+        cp -r apps/client-spa/dist deployment/apps/client-spa/
 
-    # --- Проверка SSH ключа ---
+    # --- Проверка SSH ---
     - name: Validate SSH Key
       run: |
         echo "$SSH_PRIVATE_KEY" > key.pem
@@ -69,8 +63,8 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    # --- Деплой email-service ---
-    - name: Deploy email-service
+    # --- Деплой на сервер ---
+    - name: Deploy to server
       uses: appleboy/scp-action@v0.1.5
       with:
         host: 178.250.247.67
@@ -79,43 +73,12 @@ jobs:
         port: 22
         source: "deployment/*"
         target: "/root/email-service/"
-        rm: false
         overwrite: true
-        strip_components: 1
-        timeout: 2m
+        strip_components: 0
+        timeout: 5m
 
-    # --- Деплой admin-spa ---
-    - name: Deploy admin-spa
-      uses: appleboy/scp-action@v0.1.5
-      with:
-        host: 178.250.247.67
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        source: "apps/admin-spa/dist/*,apps/admin-spa/server.js,apps/admin-spa/package.json,apps/admin-spa/package-lock.json"
-        target: "/root/email-service/apps/admin-spa/"
-        rm: false
-        overwrite: true
-        strip_components: 2
-        timeout: 2m
-
-    # --- Деплой client-spa ---
-    - name: Deploy client-spa
-      uses: appleboy/scp-action@v0.1.5
-      with:
-        host: 178.250.247.67
-        username: root
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        source: "apps/client-spa/dist/*,apps/client-spa/server.js,apps/client-spa/package.json,apps/client-spa/package-lock.json"
-        target: "/root/email-service/apps/client-spa/"
-        rm: false
-        overwrite: true
-        strip_components: 2
-        timeout: 2m
-
-    # --- Установка зависимостей и перезапуск сервисов ---
-    - name: Install dependencies, copy builds and restart services
+    # --- Настройка сервера ---
+    - name: Setup server
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: 178.250.247.67
@@ -123,36 +86,35 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          # email-service
+          # Установка зависимостей
           cd /root/email-service
-          rm -rf node_modules
           npm ci --production
           
-          # admin-spa
-          cd /root/email-service/apps/admin-spa
-          [ -f .env ] && cp .env .env.backup
-          rm -rf node_modules
+          # Admin SPA (SSR)
+          cd apps/admin-spa
+          [ -f .env ] && cp .env .env.bak
           npm ci --production
-          [ -f .env.backup ] && mv .env.backup .env
+          [ -f .env.bak ] && mv .env.bak .env
           
-          # client-spa
-          cd /root/email-service/apps/client-spa
-          [ -f .env ] && cp .env .env.backup
-          rm -rf node_modules
+          # Client SPA
+          cd ../client-spa
+          [ -f .env ] && cp .env .env.bak
           npm ci --production
-          [ -f .env.backup ] && mv .env.backup .env
+          [ -f .env.bak ] && mv .env.bak .env
           
-          # Копируем билды в nginx директории
-          rm -rf /var/www/email-service/admin-spa/*
-          cp -r /root/email-service/apps/admin-spa/dist/* /var/www/email-service/admin-spa/
+          # Раздача статики
+          rm -rf /var/www/email-service/*
+          cp -r apps/admin-spa/dist/client/* /var/www/email-service/admin-spa/
+          cp -r apps/client-spa/dist/* /var/www/email-service/client-spa/
           
-          rm -rf /var/www/email-service/client-spa/*
-          cp -r /root/email-service/apps/client-spa/dist/* /var/www/email-service/client-spa/
+          # Права
+          chown -R www-data:www-data /var/www/email-service
+          chmod -R 755 /var/www/email-service
           
           # Перезапуск сервисов
-          cd /root/email-service
           pm2 reload ecosystem.config.cjs
           pm2 save
-
-          # Сжатие .gz файлов
-          node /root/email-service/src/jobs/compress-static.js 4 --yes
+          systemctl restart nginx
+          
+          # Сжатие статики
+          node src/jobs/compress-static.js 4 --yes
