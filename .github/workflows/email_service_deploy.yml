@@ -66,7 +66,7 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy email-service
+    - name: Deploy email-service core
       uses: appleboy/scp-action@v0.1.5
       with:
         host: 178.250.247.67
@@ -76,7 +76,7 @@ jobs:
         source: "deployment/*"
         target: "/root/email-service/"
         overwrite: true
-        strip_components: 1
+        strip_components: 2
 
     - name: Deploy admin-spa SSR
       uses: appleboy/scp-action@v0.1.5
@@ -100,9 +100,9 @@ jobs:
         source: "deployment/apps/client-spa/*"
         target: "/root/email-service/apps/client-spa/"
         overwrite: true
-        strip_components: 1
+        strip_components: 2
 
-    - name: Configure production server
+    - name: Configure production server and restart services
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: 178.250.247.67
@@ -126,7 +126,7 @@ jobs:
           mkdir -p /var/www/email-service/admin-spa
           mkdir -p /var/www/email-service/client-spa
 
-          # копируем в nginx директории только dist/client из admin-spa
+          # Копируем только клиентскую часть SSR admin-spa в nginx директорию
           rsync -a --delete /root/email-service/apps/admin-spa/dist/client/ /var/www/email-service/admin-spa/
           rsync -a --delete /root/email-service/apps/client-spa/dist/ /var/www/email-service/client-spa/
 
