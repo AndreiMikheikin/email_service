@@ -1,6 +1,11 @@
-// apps/admin-spa/src/index.jsx
+// index.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './app';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './app';
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <BrowserRouter basename="/admin-spa">
+    <AppRoutes />
+  </BrowserRouter>
+);

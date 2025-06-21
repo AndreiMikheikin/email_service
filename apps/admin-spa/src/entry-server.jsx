@@ -1,4 +1,4 @@
-// apps/admin-spa/src/entry-server.jsx
+// entry-server.jsx
 import React from 'react';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
