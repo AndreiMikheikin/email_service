@@ -34,7 +34,7 @@ app.get('/admin-spa/*', async (req, res) => {
 
     const { render } = await import(path.join(__dirname, 'dist', 'server', 'entry-server.js'));
 
-    const appHtml = render(req.originalUrl);
+    const appHtml = await render(req.originalUrl);
 
     console.log('SSR HTML snippet:', appHtml.slice(0, 200));
 
@@ -77,6 +77,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
+  console.log('Admin SPA server started on port', process.env.PORT);
   console.log(`Admin SPA server listening at http://178.250.247.67:${PORT}`);
   console.log(`Proxying /api to: ${process.env.API_URL || 'http://178.250.247.67:3355'}`);
 });
