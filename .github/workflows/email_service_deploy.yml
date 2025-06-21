@@ -18,24 +18,20 @@ jobs:
     timeout-minutes: 30
 
     steps:
-    # Шаг 1: Получение кода
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    # Шаг 2: Установка Node.js
     - name: Setup Node.js 20.x
       uses: actions/setup-node@v3
       with:
         node-version: '20.x'
         cache: 'npm'
 
-    # Шаг 3: Установка корневых зависимостей
     - name: Install root dependencies
       run: npm ci
 
-    # Шаг 4: Установка зависимостей и сборка admin-spa (SSR)
     - name: Install and Build admin-spa (SSR)
       working-directory: ./apps/admin-spa
       run: |
@@ -43,33 +39,24 @@ jobs:
         npm run build:client
         npm run build:server
 
-    # Шаг 5: Установка зависимостей и сборка client-spa (SPA)
     - name: Install and Build client-spa (SPA)
       working-directory: ./apps/client-spa
       run: |
         npm ci
         npm run build
 
-    # Шаг 6: Подготовка артефактов для деплоя
     - name: Prepare deployment artifacts
       run: |
         mkdir -p deployment
-        
-        # Основной сервис
         cp -r src sql package.json package-lock.json deployment/
-        
-        # Admin SPA (SSR)
         mkdir -p deployment/apps/admin-spa
         cp apps/admin-spa/server.js deployment/apps/admin-spa/
         cp apps/admin-spa/package.json deployment/apps/admin-spa/
         cp apps/admin-spa/package-lock.json deployment/apps/admin-spa/
         cp -r apps/admin-spa/dist deployment/apps/admin-spa/
-        
-        # Client SPA (SPA)
         mkdir -p deployment/apps/client-spa
         cp -r apps/client-spa/dist deployment/apps/client-spa/
 
-    # Шаг 7: Проверка SSH ключа
     - name: Validate SSH Key
       run: |
         echo "$SSH_PRIVATE_KEY" > key.pem
@@ -79,7 +66,6 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    # Шаг 8: Деплой на сервер
     - name: Deploy email-service
       uses: appleboy/scp-action@v0.1.5
       with:
@@ -90,7 +76,7 @@ jobs:
         source: "deployment/*"
         target: "/root/email-service/"
         overwrite: true
-        strip_components: 1  # <- исправлено
+        strip_components: 1
 
     - name: Deploy admin-spa SSR
       uses: appleboy/scp-action@v0.1.5
@@ -102,7 +88,7 @@ jobs:
         source: "deployment/apps/admin-spa/*"
         target: "/root/email-service/apps/admin-spa/"
         overwrite: true
-        strip_components: 1  # <- исправлено
+        strip_components: 1
 
     - name: Deploy client-spa
       uses: appleboy/scp-action@v0.1.5
@@ -114,9 +100,8 @@ jobs:
         source: "deployment/apps/client-spa/*"
         target: "/root/email-service/apps/client-spa/"
         overwrite: true
-        strip_components: 1  # <- исправлено
+        strip_components: 1
 
-    # Шаг 9: Настройка сервера
     - name: Configure production server
       uses: appleboy/ssh-action@v1.0.0
       with:
@@ -125,37 +110,30 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
-          # Установка зависимостей основного сервиса
           cd /root/email-service
           npm ci --production
-          
-          # Установка зависимостей Admin SPA (SSR)
+
           cd apps/admin-spa
           if [ -f .env ]; then cp .env .env.backup; fi
           npm ci --production
           if [ -f .env.backup ]; then mv .env.backup .env; fi
-          
-          # Установка зависимостей Client SPA
+
           cd ../client-spa
           if [ -f .env ]; then cp .env .env.backup; fi
           npm ci --production
           if [ -f .env.backup ]; then mv .env.backup .env; fi
-          
-          # Раздача статики
+
           mkdir -p /var/www/email-service/admin-spa
           mkdir -p /var/www/email-service/client-spa
-          
+
           rsync -a --delete /root/email-service/apps/admin-spa/dist/client/ /var/www/email-service/admin-spa/
           rsync -a --delete /root/email-service/apps/client-spa/dist/ /var/www/email-service/client-spa/
-          
-          # Настройка прав
+
           chown -R www-data:www-data /var/www/email-service
           find /var/www/email-service -type d -exec chmod 755 {} \;
           find /var/www/email-service -type f -exec chmod 644 {} \;
-          
-          # Перезапуск сервисов
+
           pm2 restart all
           systemctl restart nginx
-          
-          # Дополнительные задачи
+
           node /root/email-service/src/jobs/compress-static.js 4 --yes

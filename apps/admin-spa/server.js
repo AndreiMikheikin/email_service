@@ -31,9 +31,31 @@ app.get('/admin-spa/*', async (req, res) => {
   try {
     const template = await fs.readFile(path.join(__dirname, 'dist/client/index.html'), 'utf-8');
     const { render } = await import('./dist/server/entry-server.js');
-    const appHtml = await render(req.originalUrl);
-    const html = template.replace('<!--app-html-->', appHtml);
-    res.send(html);
+
+    let didError = false;
+
+    const stream = render(req.originalUrl, {
+      onShellReady() {
+        res.status(didError ? 500 : 200);
+        res.setHeader('Content-Type', 'text/html');
+
+        // Вставляем часть шаблона до React
+        res.write(template.split('<!--app-html-->')[0]);
+
+        // Начинаем отсылать React-стрим
+        stream.pipe(res, { end: false });
+      },
+      onAllReady() {
+        // Отсылаем остаток шаблона после React и закрываем ответ
+        res.write(template.split('<!--app-html-->')[1]);
+        res.end();
+      },
+      onError(err) {
+        didError = true;
+        console.error(err);
+      }
+    });
+
   } catch (e) {
     console.error(e);
     res.status(500).send('Server Error');

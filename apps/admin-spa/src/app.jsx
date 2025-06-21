@@ -1,5 +1,5 @@
 // app.jsx
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
