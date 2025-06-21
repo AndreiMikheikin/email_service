@@ -88,7 +88,7 @@ jobs:
         source: "deployment/apps/admin-spa/*"
         target: "/root/email-service/apps/admin-spa/"
         overwrite: true
-        strip_components: 1
+        strip_components: 2
 
     - name: Deploy client-spa
       uses: appleboy/scp-action@v0.1.5
