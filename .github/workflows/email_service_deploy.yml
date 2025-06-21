@@ -58,8 +58,11 @@ jobs:
       working-directory: apps/admin-spa
       run: |
         npm ci
-        # SSR-specific dependencies
-        npm install react-dom-server@18.2.0
+        # Проверяем что react-dom правильной версии
+        if ! npm list react-dom@18.2.0; then
+          npm install react-dom@18.2.0
+        fi
+        npm list --depth=0
 
     - name: Install client-spa dependencies
       working-directory: apps/client-spa
@@ -115,11 +118,9 @@ jobs:
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts
-        
-        # Test connection
-        ssh root@$SSH_HOST "echo 'SSH connection successful'"
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
 
     # ----------------------------
     # 7. ДЕПЛОЙ НА СЕРВЕР
