@@ -83,7 +83,7 @@ jobs:
     - name: Упаковка артефактов
       run: |
         rm -rf artifact && mkdir -p artifact/{core,admin-spa,client-spa}
-        cp -r src sql package*.json ecosystem.config.cjs artifact/core/
+        cp -r src sql package*.json artifact/core/
         cp apps/admin-spa/{server.js,package*.json,.env*} artifact/admin-spa/ 2>/dev/null || true
         cp -r apps/admin-spa/dist artifact/admin-spa/
         cp -r apps/client-spa/dist artifact/client-spa/
