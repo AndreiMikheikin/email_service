@@ -1,106 +1,101 @@
-name: Деплой продакшен окружения с SSR
+name: Деплой email-service с SSR
 
 on:
   push:
     branches: [master]
     paths:
+      - 'src/**'
+      - 'sql/**'
       - 'apps/admin-spa/**'
       - 'apps/client-spa/**'
-      - 'src/**'
-      - '.github/workflows/deploy.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/email_service_deploy.yml'
 
 env:
-  NODE_ENV: production
-  SSH_HOST: ${ secrets.SSH_HOST }
+  SSH_HOST: 178.250.247.67
   DEPLOY_DIR: /root/email-service
   WEB_ROOT: /var/www/email-service
-  PM2_APP_NAME: admin-spa-ssr
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
 
     steps:
-    # ----------------------------
-    # 1. ИНИЦИАЛИЗАЦИЯ
-    # ----------------------------
-    - name: Загрузка кода
+    # 1. Клонирование репозитория
+    - name: Клонирование репозитория
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        submodules: recursive
 
-    # ----------------------------
-    # 2. НАСТРОЙКА ОКРУЖЕНИЯ
-    # ----------------------------
+    # 2. Настройка Node.js
     - name: Установка Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '20.x'
         cache: 'npm'
-        cache-dependency-path: |
-          apps/admin-spa/package-lock.json
-          apps/client-spa/package-lock.json
 
-    # ----------------------------
-    # 3. УСТАНОВКА ЗАВИСИМОСТЕЙ
-    # ----------------------------
-    - name: Установка зависимостей
-      run: |
-        echo "Установка корневых зависимостей..."
-        npm ci --ignore-scripts
-        
-        echo "Установка admin-spa..."
-        cd apps/admin-spa && npm ci --include=dev && cd ../..
-        
-        echo "Установка client-spa..."
-        cd apps/client-spa && npm ci --include=dev && cd ../..
+    # 3. Кэш зависимостей для admin-spa
+    - name: Кэш зависимостей admin-spa
+      uses: actions/cache@v4
+      with:
+        path: ./apps/admin-spa/node_modules
+        key: admin-spa-${{ hashFiles('apps/admin-spa/package-lock.json') }}
+        restore-keys: admin-spa-
 
-    # ----------------------------
-    # 4. СБОРКА ПРОЕКТОВ
-    # ----------------------------
-    - name: Сборка проектов
+    # 4. Кэш зависимостей client-spa
+    - name: Кэш зависимостей client-spa
+      uses: actions/cache@v4
+      with:
+        path: ./apps/client-spa/node_modules
+        key: client-spa-${{ hashFiles('apps/client-spa/package-lock.json') }}
+        restore-keys: client-spa-
+
+    # 5. Установка зависимостей
+    - name: Установка зависимостей (root)
+      run: npm ci --ignore-scripts
+
+    - name: Установка зависимостей (admin-spa)
+      working-directory: ./apps/admin-spa
+      run: npm ci --include=dev
+
+    - name: Установка зависимостей (client-spa)
+      working-directory: ./apps/client-spa
+      run: npm ci --include=dev
+
+    # 6. Сборка проектов
+    - name: Сборка admin-spa (SSR)
+      working-directory: ./apps/admin-spa
       run: |
-        echo "Сборка admin-spa (SSR)..."
-        cd apps/admin-spa
-        npm run build:client && npm run build:server
-        [ -f dist/client/index.html ] || { echo "❌ Отсутствует index.html"; exit 1; }
-        [ -f dist/server/entry-server.js ] || { echo "❌ Отсутствует entry-server.js"; exit 1; }
-        cd ../..
-        
-        echo "Сборка client-spa (SPA)..."
-        cd apps/client-spa
+        npm run build:client
+        npm run build:server
+        [ -f dist/client/index.html ] || { echo "❌ Ошибка сборки client-части admin-spa"; exit 1; }
+        [ -f dist/server/entry-server.js ] || { echo "❌ Ошибка сборки server-части admin-spa"; exit 1; }
+
+    - name: Сборка client-spa (SPA)
+      working-directory: ./apps/client-spa
+      run: |
         npm run build
-        [ -f dist/index.html ] || { echo "❌ Отсутствует index.html"; exit 1; }
-        cd ../..
+        [ -f dist/index.html ] || { echo "❌ Ошибка сборки client-spa"; exit 1; }
 
-    # ----------------------------
-    # 5. ПОДГОТОВКА АРТЕФАКТОВ
-    # ----------------------------
-    - name: Создание артефактов
+    # 7. Подготовка артефактов для деплоя
+    - name: Подготовка артефактов
       run: |
-        mkdir -p artifact/{core,admin-spa,client-spa}
-        mkdir -p sql migrations  # Создает пустые директории, если их нет
-        
-        # Копирование core
-        cp -r src sql migrations package*.json .env.example artifact/core/
-        
-        # Подготовка admin-spa
-        cp apps/admin-spa/{server.js,package*.json,.env*} artifact/admin-spa/ 2>/dev/null || true
-        cp -r apps/admin-spa/dist artifact/admin-spa/
-        
-        # Подготовка client-spa
-        cp -r apps/client-spa/dist artifact/client-spa/
-        cp apps/client-spa/{package*.json,.env*} artifact/client-spa/ 2>/dev/null || true
-        
-        # Проверка структуры
-        tree artifact -L 3
+        mkdir -p deployment
+        cp -r src sql package.json package-lock.json deployment/
 
-    # ----------------------------
-    # 6. НАСТРОЙКА SSH
-    # ----------------------------
-    - name: Конфигурация SSH
+        mkdir -p deployment/apps/admin-spa
+        cp apps/admin-spa/{server.js,package.json,package-lock.json} deployment/apps/admin-spa/
+        cp -r apps/admin-spa/dist deployment/apps/admin-spa/
+
+        mkdir -p deployment/apps/client-spa
+        cp -r apps/client-spa/dist deployment/apps/client-spa/
+
+        tree deployment -L 3
+
+    # 8. Настройка SSH
+    - name: Настройка SSH-доступа
       run: |
         mkdir -p ~/.ssh
         echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -109,85 +104,84 @@ jobs:
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    # ----------------------------
-    # 7. ДЕПЛОЙ НА СЕРВЕР
-    # ----------------------------
-    - name: Развертывание на сервере
+    # 9. Передача .env файлов (из secrets)
+    - name: Передача .env файлов
       run: |
-        # Деплой core
-        rsync -az --delete --progress artifact/core/ root@$SSH_HOST:$DEPLOY_DIR/
-        
-        # Деплой admin-spa
-        rsync -az --delete --progress artifact/admin-spa/ root@$SSH_HOST:$DEPLOY_DIR/apps/admin-spa/
-        
-        # Деплой client-spa
-        rsync -az --delete --progress artifact/client-spa/ root@$SSH_HOST:$DEPLOY_DIR/apps/client-spa/
-        
-        # Установка зависимостей на сервере
-        ssh root@$SSH_HOST "
-          set -e
-          echo 'Установка core зависимостей...'
-          cd $DEPLOY_DIR && npm ci --production --ignore-scripts
-          
-          echo 'Установка admin-spa зависимостей...'
-          cd $DEPLOY_DIR/apps/admin-spa && npm ci --production
-          
-          echo 'Установка client-spa зависимостей...'
-          cd $DEPLOY_DIR/apps/client-spa && npm ci --production
-        "
+        echo "$ADMIN_ENV" > .env.admin
+        echo "$CLIENT_ENV" > .env.client
+        scp .env.admin root@$SSH_HOST:$DEPLOY_DIR/apps/admin-spa/.env
+        scp .env.client root@$SSH_HOST:$DEPLOY_DIR/apps/client-spa/.env
+      env:
+        ADMIN_ENV: ${{ secrets.ADMIN_ENV }}
+        CLIENT_ENV: ${{ secrets.CLIENT_ENV }}
 
-    # ----------------------------
-    # 8. НАСТРОЙКА ПРОДАКШЕНА
-    # ----------------------------
-    - name: Запуск приложений
+    # 10. Копирование файлов на сервер
+    - name: Деплой основного кода
+      run: rsync -az --delete --progress deployment/ root@$SSH_HOST:$DEPLOY_DIR/
+
+    - name: Деплой admin-spa статики
+      run: rsync -az --delete --progress deployment/apps/admin-spa/dist/client/ root@$SSH_HOST:$WEB_ROOT/admin-spa/
+
+    - name: Деплой client-spa статики
+      run: rsync -az --delete --progress deployment/apps/client-spa/dist/ root@$SSH_HOST:$WEB_ROOT/client-spa/
+
+    # 11. Настройка и перезапуск сервисов на сервере
+    - name: Настройка окружения и перезапуск
       run: |
         ssh root@$SSH_HOST "
           set -e
-          echo 'Настройка веб-корня...'
-          mkdir -p $WEB_ROOT/{admin-spa,client-spa}
-          rsync -a --delete $DEPLOY_DIR/apps/admin-spa/dist/client/ $WEB_ROOT/admin-spa/
-          rsync -a --delete $DEPLOY_DIR/apps/client-spa/dist/ $WEB_ROOT/client-spa/
           
-          echo 'Установка прав...'
+          echo 'Установка зависимостей (root)...'
+          cd $DEPLOY_DIR && npm ci --production --ignore-scripts
+
+          echo 'Настройка admin-spa...'
+          cd $DEPLOY_DIR/apps/admin-spa && npm ci --production
+
+          echo 'Настройка client-spa...'
+          cd $DEPLOY_DIR/apps/client-spa && npm ci --production
+
+          echo 'Права на папки...'
           chown -R www-data:www-data $WEB_ROOT
           find $WEB_ROOT -type d -exec chmod 755 {} \;
           find $WEB_ROOT -type f -exec chmod 644 {} \;
-          
-          echo 'Запуск SSR сервера...'
-          pm2 delete $PM2_APP_NAME || true
-          cd $DEPLOY_DIR/apps/admin-spa
-          pm2 start server.js --name $PM2_APP_NAME --time --log-date-format='YYYY-MM-DD HH:mm:ss'
-          pm2 save
-          
-          echo 'Перезапуск nginx...'
+
+          echo 'Рестарт сервисов...'
+          pm2 restart admin-spa-ssr || pm2 start $DEPLOY_DIR/apps/admin-spa/server.js --name admin-spa-ssr
           systemctl restart nginx
+
+          echo 'Компрессия статики (если есть скрипт)...'
+          [ -f $DEPLOY_DIR/src/jobs/compress-static.js ] && node $DEPLOY_DIR/src/jobs/compress-static.js 4 --yes || echo 'Скрипт компрессии не найден'
         "
 
-    # ----------------------------
-    # 9. ВАЛИДАЦИЯ ДЕПЛОЯ
-    # ----------------------------
-    - name: Проверка работоспособности
+    # 12. Проверка деплоя
+    - name: Проверка деплоя
       run: |
         ssh root@$SSH_HOST "
           echo '=== Статус PM2 ==='
           pm2 list
-          
-          echo '=== Проверка статики ==='
-          ls -la $WEB_ROOT/admin-spa/assets/ | head -5
-          [ -f $WEB_ROOT/admin-spa/assets/index-*.js ] || echo '⚠️ JS файлы не найдены'
-          
-          echo '=== Healthcheck SSR ==='
-          curl -sSf http://localhost:3344/admin-spa/ >/dev/null || echo '❌ SSR не отвечает'
-          
-          echo '=== Проверка клиентского SPA ==='
-          [ -f $WEB_ROOT/client-spa/index.html ] || echo '⚠️ Client SPA не развернут'
+
+          echo '=== Статус Nginx ==='
+          systemctl status nginx --no-pager
+
+          echo '=== Файлы статики admin-spa ==='
+          ls -la $WEB_ROOT/admin-spa/assets/
+
+          echo '=== Проверка SSR ==='
+          curl -sSf http://localhost:3344/admin-spa/ >/dev/null && echo '✅ SSR работает' || echo '❌ Ошибка SSR'
+
+          echo '=== Проверка client-spa (опционально) ==='
+          curl -sSf http://localhost:3344/client-spa/ >/dev/null && echo '✅ Client SPA работает' || echo '⚠️ Client SPA недоступен или отключён'
         "
 
-    # ----------------------------
-    # 10. ЗАВЕРШЕНИЕ
-    # ----------------------------
-    - name: Очистка
+    # 13. Очистка SSH-ключа (всегда выполняется)
+    - name: Очистка SSH-ключа
       if: always()
+      run: rm -f ~/.ssh/id_rsa
+
+    # 14. Компрессия статики (после деплоя)
+    - name: Компрессия статики (финальный вызов)
       run: |
-        rm -f ~/.ssh/id_rsa
-        echo "Деплой завершен"
+        ssh root@$SSH_HOST "
+          echo '=== Финальная компрессия ==='
+          node /root/email-service/src/jobs/compress-static.js 4 --yes || echo '⚠️ Компрессия завершилась с ошибкой'
+        "
