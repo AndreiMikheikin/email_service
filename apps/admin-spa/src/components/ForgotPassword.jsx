@@ -31,7 +31,7 @@ const ForgotPassword = () => {
     if (status !== 'success') return;
 
     if (countdown === 0) {
-      navigate('/');
+      navigate('/admin-spa/');
       return;
     }
 
@@ -64,7 +64,7 @@ const ForgotPassword = () => {
           {status === 'error' && (
             <p className="aam_forgot-message error">{errorMessage}</p>
           )}
-          <a href="/">Отмена</a>
+          <a href="/admin-spa/">Отмена</a>
         </form>
       )}
       

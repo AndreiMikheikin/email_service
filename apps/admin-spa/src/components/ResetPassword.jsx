@@ -98,7 +98,7 @@ const ResetPassword = () => {
     return (
       <div className="aam_reset-password-container">
         <p className="aam_error">Ссылка для сброса пароля недействительна или устарела.</p>
-        <a href="/">На главную</a>
+        <a href="/admin-spa/">На главную</a>
       </div>
     );
   }

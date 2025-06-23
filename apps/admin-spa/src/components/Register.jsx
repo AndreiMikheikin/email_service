@@ -101,7 +101,7 @@ const Register = () => {
         {message && <p className="aam_register-message">{message}</p>}
 
         <div className="aam_register-links">
-          <a href="/">Уже есть аккаунт? Войти</a>
+          <a href="/admin-spa/">Уже есть аккаунт? Войти</a>
         </div>
       </form>
     </div>

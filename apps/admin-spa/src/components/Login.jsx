@@ -51,9 +51,9 @@ const Login = () => {
         {message && <p className="aam_login-message">{message}</p>}
 
         <div className="aam_login-links">
-          <a href="/forgot-password">Забыли пароль?</a>
-          <a href="/reset-password">Сброс пароля</a>
-          <a href="/register">Нет аккаунта? Регистрация</a>
+          <a href="/admin-spa/forgot-password">Забыли пароль?</a>
+          <a href="/admin-spa/reset-password">Сброс пароля</a>
+          <a href="/admin-spa/register">Нет аккаунта? Регистрация</a>
         </div>
       </form>
     </div>
