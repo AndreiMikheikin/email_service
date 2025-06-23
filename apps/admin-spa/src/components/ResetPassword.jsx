@@ -82,11 +82,11 @@ const ResetPassword = () => {
       if (token) {
         const response = await resetPassword({ token, password: newPassword });
         setMessage(response.message || 'Пароль успешно сброшен');
-        setTimeout(() => navigate('/'), 2000);
+        setTimeout(() => navigate('/admin-spa/'), 2000);
       } else {
         const response = await changePassword({ email, oldPassword: currentPassword, newPassword });
         setMessage(response.message || 'Пароль успешно изменён');
-        setTimeout(() => navigate('/'), 2000);
+        setTimeout(() => navigate('/admin-spa/'), 2000);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Ошибка при изменении пароля');
@@ -164,7 +164,7 @@ const ResetPassword = () => {
             : token ? 'Сбросить пароль' : 'Изменить пароль'}
         </button>
 
-        <a href="/">Отмена</a>
+        <a href="/admin-spa/">Отмена</a>
       </form>
     </div>
   );
