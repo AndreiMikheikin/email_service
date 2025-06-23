@@ -81,6 +81,7 @@ jobs:
     - name: Создание артефактов
       run: |
         mkdir -p artifact/{core,admin-spa,client-spa}
+        mkdir -p sql migrations  # Создает пустые директории, если их нет
         
         # Копирование core
         cp -r src sql migrations package*.json .env.example artifact/core/
