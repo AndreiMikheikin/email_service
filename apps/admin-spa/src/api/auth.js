@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+
 // Используем VITE_API_URL из .env или fallback URL
 const API_URL = import.meta.env.VITE_API_URL || 'http://178.250.247.67:3355';
 
