@@ -26,7 +26,7 @@ const register = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    const confirmUrl = `http://178.250.247.67:3344/confirm-email?token=${confirmToken}`;
+    const confirmUrl = `http://178.250.247.67/admin-spa/confirm-email?token=${confirmToken}`;
 
     await sendMail({
       to: user.email,
@@ -82,7 +82,7 @@ const forgotPassword = async (req, res) => {
     // Сохраняем токен в базе
     await userService.updateResetToken(user.id, token);
 
-    const resetUrl = `http://178.250.247.67:3344/reset-password?token=${token}`;
+    const resetUrl = `http://178.250.247.67/admin-spa/reset-password?token=${token}`;
 
     await sendMail({
       to: user.email,
