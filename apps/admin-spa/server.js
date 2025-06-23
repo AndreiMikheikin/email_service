@@ -28,6 +28,7 @@ app.use('/api', createProxyMiddleware({
 
 // статика
 app.use('/admin-spa/assets', express.static(path.join(__dirname, 'dist/client/assets')));
+console.log('Static files:', await fs.readdir(path.join(__dirname, 'dist/client/assets')));
 
 // SSR для admin-spa
 app.get('/admin-spa/*', async (req, res) => {
@@ -37,31 +38,34 @@ app.get('/admin-spa/*', async (req, res) => {
 
     let didError = false;
 
+    // Разделяем шаблон на части, сохраняя <head> и <script>
+    const [headPart, tailPart] = template.split('<!--app-html-->');
+
     const stream = render(req.originalUrl, {
       onShellReady() {
         res.status(didError ? 500 : 200);
         res.setHeader('Content-Type', 'text/html');
-
-        // Вставляем часть шаблона до React
-        res.write(template.split('<!--app-html-->')[0]);
-
-        // Начинаем отсылать React-стрим
+        
+        // Отправляем всю верхнюю часть (включая <head> со стилями и скриптами)
+        res.write(headPart);
+        
+        // Встраиваем React-контент
         stream.pipe(res, { end: false });
       },
       onAllReady() {
-        // Отсылаем остаток шаблона после React и закрываем ответ
-        res.write(template.split('<!--app-html-->')[1]);
+        // Отправляем нижнюю часть (если есть) и закрываем соединение
+        res.write(tailPart || '');
         res.end();
       },
       onError(err) {
         didError = true;
-        console.error(err);
+        console.error('SSR Error:', err);
       }
     });
 
   } catch (e) {
-    console.error(e);
-    res.status(500).send('Server Error');
+    console.error('Server Error:', e);
+    res.status(500).send('Internal Server Error');
   }
 });
 
