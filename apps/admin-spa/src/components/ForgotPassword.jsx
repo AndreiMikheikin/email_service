@@ -31,7 +31,7 @@ const ForgotPassword = () => {
     if (status !== 'success') return;
 
     if (countdown === 0) {
-      navigate('/admin-spa/');
+      navigate('/');
       return;
     }
 
