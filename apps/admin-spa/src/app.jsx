@@ -21,4 +21,5 @@ const AppRoutes = () => (
   </Suspense>
 );
 
+
 export default AppRoutes;
